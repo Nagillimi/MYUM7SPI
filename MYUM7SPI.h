@@ -145,30 +145,53 @@ class MYUM7SPI {
 
 public:
 
-	//////////////////////////////////
-	//		ACCESIBLE FUNCTIONS		//
-	//////////////////////////////////
-	
 	MYUM7SPI(uint16_t cs_);
+
+	//////////////////////////////////
+	//		 CONFIG FUNCTIONS		//
+	//////////////////////////////////
 	
-	void begin();
+	void set_all_raw_rate(byte rate_);
+	void set_all_processed_rate(byte rate_);
+	void set_orientation_rate(byte quat_rate, byte euler_rate, byte pos_rate, byte vel_rate);
+	void set_orientation_rate(byte quat_rate, byte euler_rate, byte pos_rate);
+	void set_orientation_rate(byte quat_rate, byte euler_rate);
+	void set_orientation_rate(byte quat_rate);
+	void set_misc_ssettings(bool pps, bool zg, bool q, bool mag);
 
-	int16_t read_register(uint16_t address, bool first_half);
-	int32_t read_register(uint16_t address);
+	//////////////////////////////
+	//		DATA FUNCTIONS		//
+	//////////////////////////////
 
-	void write_config_register(uint16_t address, float contents_);
+	void get_all_raw_data();
+	void get_all_processed_data();
+	void get_all_orientation_data();
 
-	void calibrate();
-	void reset();
+	//////////////////////////////////
+	//		 COMMAND FUNCTIONS		//
+	//////////////////////////////////
+	
+	int32_t get_firmware();
+	void flash_commit();
+	void factory_reset();
+	void zero_gyros();
+	void set_home_position();
+	void set_mag_reference();
+	void calibrate_accelerometers();
+	void reset_ekf();
+	
+	//////////////////////////////////////
+	//		 ACCESSIBLE VARIABLES		//
+	//////////////////////////////////////
 
-	// EULER Variables
+	/* EULER Variables */
 	int16_t roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate;
 	float euler_time;
 
-	// QUATERNION Variables
+	/* QUATERNION Variables */
 	int16_t quat_a, quat_b, quat_c, quat_d, quat_time;
 
-	// RAW Variables
+	/* RAW Variables */
 	int16_t gyro_raw_x, gyro_raw_y, gyro_raw_z;
 	int16_t accel_raw_x, accel_raw_y, accel_raw_z;
 	int16_t mag_raw_x, mag_raw_y, mag_raw_z;
@@ -176,30 +199,40 @@ public:
 
 	float gyro_raw_time, accel_raw_time, mag_raw_time;
 
-	// PROCESSED Variables
+	/* PROCESSED Variables */
 	float gyro_x, gyro_y, gyro_z, gyro_time;
 	float accel_x, accel_y, accel_z, accel_time;
 	float mag_x, mag_y, mag_z, mag_time;
 
-	// POSITION and VELOCITY Variables
+	/* POSITION and VELOCITY Variables */
 	float north_pos, east_pos, up_pos, pos_time;
 	float north_vel, east_vel, up_vel, vel_time;
 
-	// GPS Variables
-	// Only available if GPS is installed with coms set on TX2/RX2
+	/* GPS Variables
+	   Only available if GPS is installed with coms set on TX2/RX2 */
 	float lattitude, longitude, altitude, course, speed, gps_time;
 
-	// SAT Variables
-	// Only available if GPS is installed with coms set on TX2/RX2
-	// SNR = Signal-to-Noise Ratio
-	// (Note index is 1 lower than actual satellite ID)
+	/* SAT Variables
+	   Only available if GPS is installed with coms set on TX2/RX2
+	   SNR = Signal-to-Noise Ratio
+	   (Note index is 1 lower than actual satellite ID) */
 	float satellite_id[12], satellite_SNR[12];
 
-	// GYRO BIAS Variables. 
-	// Not necessary to read in for ZERO_GYROS, that function already measures these
+	/* GYRO BIAS Variables. 
+	   Not necessary to read in for ZERO_GYROS, that function already measures these */
 	float gyro_bias_x, gyro_bias_y, gyro_bias_z;
 
 private:
+
+	//////////////////////////////////
+	//		INTERNAL FUNCTIONS		//
+	//////////////////////////////////
+
+	int16_t read_register(uint16_t address, bool first_half);
+	int32_t read_register(uint16_t address);
+
+	void write_register(byte address, uint32_t contents_);
+	void write_register(byte address);
 
 	int cs;
 };
