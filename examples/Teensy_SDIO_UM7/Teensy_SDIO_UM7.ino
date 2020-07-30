@@ -11,7 +11,15 @@
    An implementation of the UM7's SPI mode to allow for logging of:
    - 3 UM7's @ 250 Hz
    - 2 FSR's @ 500 Hz
-
+   
+   Notes
+   1. A txt file is used instead of a bin file since datasets have three sizes
+      and the highest dataset value is used for each variable sent to the buffer (4B).
+	  Shown:
+		  comma = 1B
+		  euler data & analog data = 2B
+		  gyro data & accel data = 4B
+	2. 
 */
 
 #include "SdFat.h"
@@ -141,13 +149,15 @@ void log_data() {
 			delta = micros() - logTime;
 		}
 
-		for (int i = 0; i < FIFO_DIM; i += (DATA_BYTE_WRITE_SIZE / 4)) {
+		for (int i = 0; i < FIFO_DIM; i += ) {
 			// Capture the imu data from the UM7s
 			thigh_imu.get_vals_data();
 			shank_imu.get_vals_data();
 			foot_imu.get_vals_data();
 
-			// 29 * 2 * 32 Bytes = 1856 Bytes/transfer.
+			// 29 * 2 * 32 bits / 8 bits per Byte = 232 Bytes/transfer without
+			// commas. It's 464 Bytes/transfer with commas...
+			// This leaves 48 Bytes
 			// Get better!!
 
 			// FSR analog data
