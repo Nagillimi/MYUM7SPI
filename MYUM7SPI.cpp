@@ -237,6 +237,20 @@ void MYUM7SPI::get_all_orientation_data() {
 	vel_time = read_register(DREG_VELOCITY_TIME);
 }
 
+void MYUM7SPI::get_vals_data() {
+	gyro_x = read_register(DREG_GYRO_PROC_X);
+	gyro_y = read_register(DREG_GYRO_PROC_Y);
+	gyro_z = read_register(DREG_GYRO_PROC_Z);
+
+	accel_x = read_register(DREG_ACCEL_PROC_X);
+	accel_y = read_register(DREG_ACCEL_PROC_Y);
+	accel_z = read_register(DREG_ACCEL_PROC_Z);
+
+	roll = read_register(DREG_EULER_PHI_THETA, 1) / 91.02222;
+	pitch = read_register(DREG_EULER_PHI_THETA, 0) / 91.02222;
+	yaw = read_register(DREG_EULER_PSI, 1) / 91.02222;
+}
+
 //////////////////////////////////
 //		COMMAND FUNCTIONS		//
 //////////////////////////////////
