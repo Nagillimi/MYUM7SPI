@@ -166,6 +166,7 @@ public:
 	void get_all_raw_data();
 	void get_all_processed_data();
 	void get_all_orientation_data();
+	void get_vals_data();
 
 	//////////////////////////////////
 	//		 COMMAND FUNCTIONS		//
