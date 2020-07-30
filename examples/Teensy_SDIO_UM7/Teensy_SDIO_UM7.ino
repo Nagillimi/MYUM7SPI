@@ -149,15 +149,15 @@ void log_data() {
 			delta = micros() - logTime;
 		}
 
-		for (int i = 0; i < FIFO_DIM; i += ) {
+		for (int i = 0; i < FIFO_DIM; i += DATA_BYTE_WRITE_SIZE) {
 			// Capture the imu data from the UM7s
 			thigh_imu.get_vals_data();
 			shank_imu.get_vals_data();
 			foot_imu.get_vals_data();
 
 			// 29 * 2 * 32 bits / 8 bits per Byte = 232 Bytes/transfer without
-			// commas. It's 464 Bytes/transfer with commas...
-			// This leaves 48 Bytes
+			// parsing. It's 464 Bytes/transfer with commas & newlines.
+			// This leaves 48 Bytes in the 512 Byte buffer...
 			// Get better!!
 
 			// FSR analog data
@@ -192,7 +192,7 @@ void log_data() {
 			buf32[i++] = foot_imu.accel_z; buf32[i++] = ',';
 			buf32[i++] = foot_imu.roll; buf32[i++] = ',';
 			buf32[i++] = foot_imu.pitch; buf32[i++] = ',';
-			buf32[i++] = foot_imu.yaw; buf32[i++] = ',';
+			buf32[i++] = foot_imu.yaw; buf32[i++] = '\n';
 		}
 		flush();
 
