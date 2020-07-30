@@ -37,11 +37,16 @@ FsFile file;
 // BYTE BUFFER
 uint8_t buf[BUF_DIM];
 
-// buffer as uint32_t
+// Pointer to the buffer as a uint32_t,
+// size is 1024 B for a 32 KiB uint8_t buffer
 uint32_t* buf32 = (uint32_t*)buf;
 
 // Latency
 const uint32_t LOG_INTERVAL_USEC = 2000;
+
+// Size of data required to be sent per one transfer. 
+// Val's datasets come in to 128 Bytes
+const uint32_t DATA_BYTE_WRITE_SIZE = 94;
 
 // Set USE_RTC nonzero for file timestamps.
 // RAM use will be marginal on Uno with RTClib.
@@ -63,4 +68,4 @@ const uint32_t LOG_INTERVAL_USEC = 2000;
 #endif  // __AVR_ATmega328P__
 
 // Max number of records to buffer while SD is busy.
-const size_t FIFO_DIM = 512 * FIFO_SIZE_SECTORS / sizeof(data_t);
+const size_t FIFO_DIM = 512 * FIFO_SIZE_SECTORS / DATA_BYTE_WRITE_SIZE;

@@ -54,7 +54,7 @@ void loop() {
 	if (c == '1') {
 		Serial.println(
 			"\nFIFO SDIO mode."
-			"\nPress '2' to stop logging."
+			"\nType any character to stop logging."
 		);
 
 		// Open file as WRITE ONLY
@@ -67,14 +67,11 @@ void loop() {
 			errorHalt("truncate failed")
 		}
 
-		do {
-			while (!Serial.available()) {
-			}
-			d = Serial.read();
-			// Entering logging mode
-			log_data();
-		} while (d != '2');
+		log_data();
 		file.close();
+
+		// Wait forever, program done.
+		while (1);
 
 	} else {
 		Serial.println("Invalid input");
@@ -119,34 +116,93 @@ void errorHalt(const char* msg) {
 // UM7's will just duplicate the data, since this will operate at 500 Hz
 // Comes out to be 122 B/transfer = 61KB/s
 void log_data() {
+	int32_t delta;
+	
+	// Wait until SD is not busy. Included in SdFat library
+	while (sd.card()->isBusy()) {}
+
+	// Start time for log file.
+	uint32_t m = millis();
+
 	// Time to log next record.
 	uint32_t logTime = micros();
-	while (true) {
+	while (1) {
 		// Time for next data record.
 		logTime += LOG_INTERVAL_USEC;
 
-		// Wait until time to log data.
 		delta = micros() - logTime;
 		if (delta > 0) {
 			Serial.print(F("delta: "));
 			Serial.println(delta);
 			error("Rate too fast");
 		}
+		// Wait until time to log data.
 		while (delta < 0) {
 			delta = micros() - logTime;
 		}
+
+		for (int i = 0; i < FIFO_DIM; i += (DATA_BYTE_WRITE_SIZE / 4)) {
+			// Capture the imu data from the UM7s
+			thigh_imu.get_vals_data();
+			shank_imu.get_vals_data();
+			foot_imu.get_vals_data();
+			// FSR analog data
+			buf32[i] = analogRead(heel_fsr) | analogRead(toe_fsr);
+			// thigh data
+			buf32[i++] = thigh_imu.gyro_x; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.gyro_y; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.gyro_z; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.accel_x; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.accel_y; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.accel_z; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.roll; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.pitch; buf32[i++] = ',';
+			buf32[i++] = thigh_imu.yaw; buf32[i++] = ',';
+			// shank data
+			buf32[i++] = shank_imu.gyro_x; buf32[i++] = ',';
+			buf32[i++] = shank_imu.gyro_y; buf32[i++] = ',';
+			buf32[i++] = shank_imu.gyro_z; buf32[i++] = ',';
+			buf32[i++] = shank_imu.accel_x; buf32[i++] = ',';
+			buf32[i++] = shank_imu.accel_y; buf32[i++] = ',';
+			buf32[i++] = shank_imu.accel_z; buf32[i++] = ',';
+			buf32[i++] = shank_imu.roll; buf32[i++] = ',';
+			buf32[i++] = shank_imu.pitch; buf32[i++] = ',';
+			buf32[i++] = shank_imu.yaw; buf32[i++] = ',';
+			// foot data
+			buf32[i++] = foot_imu.gyro_x; buf32[i++] = ',';
+			buf32[i++] = foot_imu.gyro_y; buf32[i++] = ',';
+			buf32[i++] = foot_imu.gyro_z; buf32[i++] = ',';
+			buf32[i++] = foot_imu.accel_x; buf32[i++] = ',';
+			buf32[i++] = foot_imu.accel_y; buf32[i++] = ',';
+			buf32[i++] = foot_imu.accel_z; buf32[i++] = ',';
+			buf32[i++] = foot_imu.roll; buf32[i++] = ',';
+			buf32[i++] = foot_imu.pitch; buf32[i++] = ',';
+			buf32[i++] = foot_imu.yaw; buf32[i++] = ',';
+		}
+		flush();
+
+		// Character typed over Serial triggers program stop
+		if (Serial.available()) {
+			break;
+		}
+	}
+	Serial.print(F("\nLog time: "));
+	Serial.print(0.001*(millis() - m));
+	Serial.println(F(" Seconds"));
+
+	Serial.print(("File size: "));
+	// Warning cast used for print since fileSize is uint64_t.
+	Serial.print((uint32_t)binFile.fileSize());
 }
 
 void flush() {
-	// Make sure file is open
-	if (!file.open(file_name, O_WRITE | O_CREAT)) {
-		errorHalt("file open failed");
-	}
-
-	// Find the size of the file
-	unsigned long count = file.size();
-	// Write the buffer contents to the SD card
-	if (count != file.write(buf, count)) {
-		errorHalt("Failed to write to log file");
+	// Write data if SD is not busy.
+	if (!sd.card()->isBusy()) {
+		// Find the size of the file
+		unsigned long count = file.size();
+		// Write the buffer contents to the SD card
+		if (count != file.write(buf, count)) {
+			errorHalt("Failed to write to log file");
+		}
 	}
 }

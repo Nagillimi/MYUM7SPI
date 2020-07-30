@@ -325,7 +325,7 @@ void MYUM7SPI::reset_ekf() {
 /*
 	Read a register that carries 2 datasets (euler data). Uses a user defined bool to determine which dataset to return
 */
-int16_t MYUM7SPI::read_register(uint16_t address, bool first_half) {
+int16_t MYUM7SPI::read_register(byte address, bool first_half) {
 	byte inByte = 0;
 	int16_t result;
 	
@@ -361,7 +361,7 @@ int16_t MYUM7SPI::read_register(uint16_t address, bool first_half) {
 /*
 	Read from a register. Assume register takes an entire 4 Bytes and is a float point type.
 */
-int32_t MYUM7SPI::read_register(uint16_t address) {
+int32_t MYUM7SPI::read_register(byte address) {
 	byte inByte = 0;
 	int32_t result;
 
