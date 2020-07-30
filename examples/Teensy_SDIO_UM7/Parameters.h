@@ -40,6 +40,9 @@ uint8_t buf[BUF_DIM];
 // buffer as uint32_t
 uint32_t* buf32 = (uint32_t*)buf;
 
+// Latency
+const uint32_t LOG_INTERVAL_USEC = 2000;
+
 // Set USE_RTC nonzero for file timestamps.
 // RAM use will be marginal on Uno with RTClib.
 #define USE_RTC 0
@@ -47,3 +50,17 @@ uint32_t* buf32 = (uint32_t*)buf;
 #include "RTClib.h"
 #endif  // USE_RTC
 
+// FIFO SIZE - 512 byte sectors.  Modify for the RAM on your board.
+#ifdef __AVR_ATmega328P__
+// Use 512 bytes for 328 boards.
+#define FIFO_SIZE_SECTORS 1
+#elif defined(__AVR__)
+// Use 2 KiB for other AVR boards.
+#define FIFO_SIZE_SECTORS 4
+#else  // __AVR_ATmega328P__
+// Use 8 KiB for non-AVR boards.
+#define FIFO_SIZE_SECTORS 16
+#endif  // __AVR_ATmega328P__
+
+// Max number of records to buffer while SD is busy.
+const size_t FIFO_DIM = 512 * FIFO_SIZE_SECTORS / sizeof(data_t);

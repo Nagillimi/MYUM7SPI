@@ -249,6 +249,11 @@ void MYUM7SPI::get_vals_data() {
 	roll = read_register(DREG_EULER_PHI_THETA, 1) / 91.02222;
 	pitch = read_register(DREG_EULER_PHI_THETA, 0) / 91.02222;
 	yaw = read_register(DREG_EULER_PSI, 1) / 91.02222;
+
+	// Include these datasets to get to 128 B/transfer
+	roll_rate = read_register(DREG_EULER_PHI_THETA_DOT, 1) / 16.0;
+	pitch_rate = read_register(DREG_EULER_PHI_THETA_DOT, 0) / 16.0;
+	yaw_rate = read_register(DREG_EULER_PSI_DOT, 1) / 16.0;
 }
 
 //////////////////////////////////

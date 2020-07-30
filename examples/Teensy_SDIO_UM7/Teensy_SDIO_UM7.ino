@@ -119,7 +119,22 @@ void errorHalt(const char* msg) {
 // UM7's will just duplicate the data, since this will operate at 500 Hz
 // Comes out to be 122 B/transfer = 61KB/s
 void log_data() {
+	// Time to log next record.
+	uint32_t logTime = micros();
+	while (true) {
+		// Time for next data record.
+		logTime += LOG_INTERVAL_USEC;
 
+		// Wait until time to log data.
+		delta = micros() - logTime;
+		if (delta > 0) {
+			Serial.print(F("delta: "));
+			Serial.println(delta);
+			error("Rate too fast");
+		}
+		while (delta < 0) {
+			delta = micros() - logTime;
+		}
 }
 
 void flush() {
