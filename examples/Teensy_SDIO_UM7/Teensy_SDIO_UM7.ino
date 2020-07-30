@@ -146,8 +146,13 @@ void log_data() {
 			thigh_imu.get_vals_data();
 			shank_imu.get_vals_data();
 			foot_imu.get_vals_data();
+
+			// 29 * 2 * 32 Bytes = 1856 Bytes/transfer.
+			// Get better!!
+
 			// FSR analog data
-			buf32[i] = analogRead(heel_fsr) | analogRead(toe_fsr);
+			buf32[i] = analogRead(heel_fsr); buf32[i++] = ',';
+			byf32[i++] = analogRead(toe_fsr); buf32[i++] = ',';
 			// thigh data
 			buf32[i++] = thigh_imu.gyro_x; buf32[i++] = ',';
 			buf32[i++] = thigh_imu.gyro_y; buf32[i++] = ',';
