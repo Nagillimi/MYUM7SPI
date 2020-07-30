@@ -12,11 +12,11 @@ const uint8_t SD_CS_PIN = SDCARD_SS_PIN;
 // 1 for FAT16/FAT32, 2 for exFAT, 3 for FAT16/FAT32 and exFAT.
 #define SD_FAT_TYPE 3
 
-// 32 KiB buffer.
+// Huge 32 KiB buffer.
 const size_t BUF_DIM = 32768;
 
-// 8 MiB file.
-const uint32_t FILE_SIZE = 256UL * BUF_DIM;
+// 4 GiB file. Maybe make a little bigger?
+const uint32_t FILE_SIZE = 131072UL * BUF_DIM;
 
 #if SD_FAT_TYPE == 0
 SdFat sd;
@@ -34,6 +34,7 @@ FsFile file;
 #error Invalid SD_FAT_TYPE
 #endif  // SD_FAT_TYPE
 
+// BYTE BUFFER
 uint8_t buf[BUF_DIM];
 
 // buffer as uint32_t
