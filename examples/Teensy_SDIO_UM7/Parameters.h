@@ -38,3 +38,11 @@ uint8_t buf[BUF_DIM];
 
 // buffer as uint32_t
 uint32_t* buf32 = (uint32_t*)buf;
+
+// Set USE_RTC nonzero for file timestamps.
+// RAM use will be marginal on Uno with RTClib.
+#define USE_RTC 0
+#if USE_RTC
+#include "RTClib.h"
+#endif  // USE_RTC
+
