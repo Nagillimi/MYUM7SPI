@@ -142,7 +142,7 @@ void loop() {
 	} while (Serial.available() && Serial.read());
 
 	Serial.println(
-		"\nType '1' to begin loggin in FIFO SDIO mode");
+		"\nType '1' to log in FIFO SDIO mode");
 	while (!Serial.available()) {
 	}
 	char c = Serial.read();
@@ -152,12 +152,12 @@ void loop() {
 			errorHalt("begin failed");
 		}
 		Serial.println("\nFIFO SDIO mode.");
+		ready = true;
+		runTest();
+		ready = false;
 	}
 	else {
 		Serial.println("Invalid input");
 		return;
 	}
-	ready = true;
-	runTest();
-	ready = false;
 }
