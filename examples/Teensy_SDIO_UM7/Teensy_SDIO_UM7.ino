@@ -13,7 +13,8 @@
 
 // Include the SdFat Library
 #include "SdFat.h"
-#include <MYUM7SPI.h>
+#include "Logger.h"
+#include "MYUM7SPI.h"
 
 // Use built-in SD for SPI modes on Teensy 3.5/3.6.
 // Teensy 4.0 use first SPI port.
@@ -58,6 +59,19 @@ uint8_t buf[BUF_DIM];
 uint32_t* buf32 = (uint32_t*)buf;
 
 //------------------------------------------------------------------------------
+void logRecord(data_t* data, uint16_t overrun) {
+	if (overrun) {
+		// Add one since this record has no adc data. Could add overrun field.
+		overrun++;
+		data->adc[0] = 0X8000 | overrun;
+	}
+	else {
+		for (size_t i = 0; i < ADC_COUNT; i++) {
+			data->adc[i] = analogRead(i);
+		}
+	}
+}
+//------------------------------------------------------------------------------
 void errorHalt(const char* msg) {
 	Serial.print("Error: ");
 	Serial.println(msg);
@@ -95,8 +109,8 @@ void yield() {
 	yieldMicros += m;
 }
 //------------------------------------------------------------------------------
-void runTest() {
-	// Opens binary file in RDWR or CREATE mode
+void logData() {
+	/*// Opens binary file in RDWR or CREATE mode
 	if (!file.open("TeensyDemo.bin", O_RDWR | O_CREAT)) {
 		errorHalt("open failed");
 	}
@@ -121,7 +135,133 @@ void runTest() {
 		Serial.println(1000.0*FILE_SIZE / t);
 	}
 	file.close();
-	Serial.println("Done");
+	Serial.println("Done");*/
+
+	int32_t delta;  // Jitter in log time.
+	int32_t maxDelta = 0;
+	uint32_t maxLogMicros = 0;
+	uint32_t maxWriteMicros = 0;
+	size_t maxFifoUse = 0;
+	size_t fifoCount = 0;
+	size_t fifoHead = 0;
+	size_t fifoTail = 0;
+	uint16_t overrun = 0;
+	uint16_t maxOverrun = 0;
+	uint32_t totalOverrun = 0;
+	uint32_t fifoBuf[128 * FIFO_SIZE_SECTORS];
+	data_t* fifoData = (data_t*)fifoBuf;
+
+	// Write dummy sector to start multi-block write.
+	dbgAssert(sizeof(fifoBuf) >= 512);
+	memset(fifoBuf, 0, sizeof(fifoBuf));
+	if (binFile.write(fifoBuf, 512) != 512) {
+		error("write first sector failed");
+	}
+	serialClearInput();
+	Serial.println(F("Type any character to stop"));
+
+	// Wait until SD is not busy.
+	while (sd.card()->isBusy()) {}
+
+	// Start time for log file.
+	uint32_t m = millis();
+
+	// Time to log next record.
+	uint32_t logTime = micros();
+	while (true) {
+		// Time for next data record.
+		logTime += LOG_INTERVAL_USEC;
+
+		// Wait until time to log data.
+		delta = micros() - logTime;
+		if (delta > 0) {
+			Serial.print(F("delta: "));
+			Serial.println(delta);
+			error("Rate too fast");
+		}
+		while (delta < 0) {
+			delta = micros() - logTime;
+		}
+
+		if (fifoCount < FIFO_DIM) {
+			uint32_t m = micros();
+			logRecord(fifoData + fifoHead, overrun);
+			m = micros() - m;
+			if (m > maxLogMicros) {
+				maxLogMicros = m;
+			}
+			fifoHead = fifoHead < (FIFO_DIM - 1) ? fifoHead + 1 : 0;
+			fifoCount++;
+			if (overrun) {
+				if (overrun > maxOverrun) {
+					maxOverrun = overrun;
+				}
+				overrun = 0;
+			}
+		}
+		else {
+			totalOverrun++;
+			overrun++;
+			if (overrun > 0XFFF) {
+				error("too many overruns");
+			}
+			if (ERROR_LED_PIN >= 0) {
+				digitalWrite(ERROR_LED_PIN, HIGH);
+			}
+		}
+		// Save max jitter.
+		if (delta > maxDelta) {
+			maxDelta = delta;
+		}
+		// Write data if SD is not busy.
+		if (!sd.card()->isBusy()) {
+			size_t nw = fifoHead > fifoTail ? fifoCount : FIFO_DIM - fifoTail;
+			// Limit write time by not writing more than 512 bytes.
+			const size_t MAX_WRITE = 512 / sizeof(data_t);
+			if (nw > MAX_WRITE) nw = MAX_WRITE;
+			size_t nb = nw * sizeof(data_t);
+			uint32_t usec = micros();
+			if (nb != binFile.write(fifoData + fifoTail, nb)) {
+				error("write binFile failed");
+			}
+			usec = micros() - usec;
+			if (usec > maxWriteMicros) {
+				maxWriteMicros = usec;
+			}
+			fifoTail = (fifoTail + nw) < FIFO_DIM ? fifoTail + nw : 0;
+			if (fifoCount > maxFifoUse) {
+				maxFifoUse = fifoCount;
+			}
+			fifoCount -= nw;
+			if (Serial.available()) {
+				break;
+			}
+		}
+	}
+	Serial.print(F("\nLog time: "));
+	Serial.print(0.001*(millis() - m));
+	Serial.println(F(" Seconds"));
+	binFile.truncate();
+	binFile.sync();
+	Serial.print(("File size: "));
+	// Warning cast used for print since fileSize is uint64_t.
+	Serial.print((uint32_t)binFile.fileSize());
+	Serial.println(F(" bytes"));
+	Serial.print(F("totalOverrun: "));
+	Serial.println(totalOverrun);
+	Serial.print(F("FIFO_DIM: "));
+	Serial.println(FIFO_DIM);
+	Serial.print(F("maxFifoUse: "));
+	Serial.println(maxFifoUse);
+	Serial.print(F("maxLogMicros: "));
+	Serial.println(maxLogMicros);
+	Serial.print(F("maxWriteMicros: "));
+	Serial.println(maxWriteMicros);
+	Serial.print(F("Log interval: "));
+	Serial.print(LOG_INTERVAL_USEC);
+	Serial.print(F(" micros\nmaxDelta: "));
+	Serial.print(maxDelta);
+	Serial.println(F(" micros"));
 }
 //------------------------------------------------------------------------------
 void setup() {
@@ -153,7 +293,7 @@ void loop() {
 		}
 		Serial.println("\nFIFO SDIO mode.");
 		ready = true;
-		runTest();
+		logData();
 		ready = false;
 	}
 	else {
