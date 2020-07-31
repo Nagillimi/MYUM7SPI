@@ -133,7 +133,7 @@ void loop() {
 	}
 	delay(2000);
 }
-
+// ---------------------------------------------------------------------------------------------------------
 // Sets up the 3 UM7s processed and euler rates
 // Calibrates all the accels and zeroes all the gyros
 void setup_imus(byte rate_) {
@@ -151,7 +151,7 @@ void setup_imus(byte rate_) {
 	shank_imu.zero_gyros();
 	foot_imu.zero_gyros();
 }
-
+// ---------------------------------------------------------------------------------------------------------
 // Generic error function, searches the SdFat lib for error codes and prints them along 
 // with the passed message (msg)
 void errorHalt(const char* msg) {
@@ -168,14 +168,14 @@ void errorHalt(const char* msg) {
 	// Halts program
 	while (true) {}
 }
-
+// ---------------------------------------------------------------------------------------------------------
 // UM7's will just duplicate the data, since this will operate at 500 Hz
 // Comes out to be 98 B/transfer = 49KB/s written to the SD card
 void log_data() {
 	int32_t delta;
 	
 	// Wait until SD is not busy. Included in SdFat library
-	while (sd.card()->isBusy()) {}
+	while (sd.card()->isBusy());
 
 	// Start time in msec for log file
 	// Used to disply total logging duration
@@ -211,7 +211,7 @@ void log_data() {
 
 		// Loop fills up buffer with exact amount of data required to fill 512 bytes.
 		// Iterates in complete dataset sized chunks (DATA_BYTE_WRITE_SIZE)
-		for (uint i = 0; i < FIFO_DIM; i += DATA_BYTE_WRITE_SIZE) {
+		for (uint i = 0; i < BUF_DIM; i += DATA_BYTE_WRITE_SIZE) {
 			// Capture FSR analog data			
 			fsr_heel = analogRead(fsr_heel_pin);
 			fsr_toe = analogRead(fsr_toe_pin);
@@ -225,10 +225,10 @@ void log_data() {
 			buf[i+=2] = (byte)((t >> 16) & 0xFF);
 			buf[i+=3] = (byte)((t >> 24) & 0xFF);
 			// FSR data, 2x uint16_t parsed into bytes
-			buf[i+=4] = (byte)(heel_fsr & 0xFF);
-			buf[i+=5] = (byte)((heel_fsr >> 8) & 0xFF);
-			buf[i+=6] = (byte)(toe_fsr & 0xFF);
-			buf[i+=7] = (byte)((toe_fsr >> 8) & 0xFF);
+			buf[i+=4] = (byte)(fsr_heel & 0xFF);
+			buf[i+=5] = (byte)((fsr_heel >> 8) & 0xFF);
+			buf[i+=6] = (byte)(fsr_toe & 0xFF);
+			buf[i+=7] = (byte)((fsr_toe >> 8) & 0xFF);
 			//  Capture thigh imu data
 			thigh_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+=8], buf[i+=9], buf[i+=10], buf[i+=11]);
 			thigh_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+=12], buf[i+=13], buf[i+=14], buf[i+=15]);
@@ -276,7 +276,7 @@ void log_data() {
 	// Could use this value for bin_to_csv()?
 	Serial.print((uint32_t)binFile.fileSize());
 }
-
+// ---------------------------------------------------------------------------------------------------------
 // Flushes the filled buffer to the SD card
 // Buffer is then overwritten instead of cleared
 void flush() {
@@ -290,14 +290,14 @@ void flush() {
 		}
 	}
 }
-
+// ---------------------------------------------------------------------------------------------------------
 // Similar to printRecord() function in ExFatLogger from SdFat library
 // Converts bin files to csv files custom for this application
 // May need to use a console application for large files, found here:
 // (https://www.forward.com.au/pfod/ArduinoProgramming/DataRate/SD_logging/SDToCSV.jar)
 void bin_to_csv() {
 	// Use the hard-coded data_t type to track and parse bytes from binary file
-	data_t * binData[FIFO_DIM];
+	data_t & binData[FIFO_DIM];
 	bool header = true;
 	byte lastPct = 0;
 
