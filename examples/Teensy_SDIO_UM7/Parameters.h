@@ -75,3 +75,5 @@ const uint32_t DATA_BYTE_WRITE_SIZE = 98;
 
 // Max number of records to buffer while SD is busy.
 const size_t FIFO_DIM = 512 * FIFO_SIZE_SECTORS / DATA_BYTE_WRITE_SIZE;
+
+#endif // Parameters_h

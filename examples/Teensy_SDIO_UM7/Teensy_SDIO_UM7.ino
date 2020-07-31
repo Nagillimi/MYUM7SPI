@@ -28,7 +28,7 @@
 #include "MYUM7SPI.h"
 #include "Parameters.h"
 
-byte fsr_heel_pin = A0, fsr_heel_pin = A1;
+byte fsr_heel_pin = A0, fsr_toe_pin = A1;
 uint16_t fsr_heel, fsr_toe;
 
 // Init UM7's on the associated SS/CS pin
@@ -92,7 +92,6 @@ void setup() {
 }
 
 void loop() {
-	char c, d;
 	// Reoccuring message
 	Serial.println(
 		"\nType '1' to begin logging in FIFO SDIO mode."
@@ -102,7 +101,7 @@ void loop() {
 	while (!Serial.available()) {
 	}
 	// Entering logging mode
-	c = Serial.read();
+	char c = Serial.read();
 
 	if (c == '1') {
 		Serial.println(
@@ -116,12 +115,12 @@ void loop() {
 		}
 
 		// Optimize file
-		if (!file.truncate()) {
-			errorHalt("truncate failed")
+		if (!binFile.truncate()) {
+			errorHalt("truncate failed");
 		}
 
 		log_data();
-		file.close();
+		binFile.close();
 	} else if (c == '2') {
 		Serial.println(
 			"\nConverting binary log file to csv file."
@@ -212,51 +211,51 @@ void log_data() {
 
 		// Loop fills up buffer with exact amount of data required to fill 512 bytes.
 		// Iterates in complete dataset sized chunks (DATA_BYTE_WRITE_SIZE)
-		for (int i = 0; i < FIFO_DIM; i += DATA_BYTE_WRITE_SIZE) {
+		for (uint i = 0; i < FIFO_DIM; i += DATA_BYTE_WRITE_SIZE) {
 			// Capture FSR analog data			
-			heel_fsr = analogRead(heel_fsr_pin);
-			toe_fsr = analogRead(toe_fsr_pin);
+			fsr_heel = analogRead(fsr_heel_pin);
+			fsr_toe = analogRead(fsr_toe_pin);
 
 			// Data is read in as binary directly from FSRs and UM7s over analog and SPI, respectively.
 			// Converts unsigned Bytes to their associated signed datasets in bin_to_csv()
 
 			// Timestamp data, uint32_t parsed into bytes
 			buf[i] = (byte)(t & 0xFF);
-			buf[i++] = (byte)((t >> 8) & 0xFF);
-			buf[i++] = (byte)((t >> 16) & 0xFF);
-			buf[i++] = (byte)((t >> 24) & 0xFF);
+			buf[i+=1] = (byte)((t >> 8) & 0xFF);
+			buf[i+=2] = (byte)((t >> 16) & 0xFF);
+			buf[i+=3] = (byte)((t >> 24) & 0xFF);
 			// FSR data, 2x uint16_t parsed into bytes
-			buf[i++] = (byte)(heel_fsr & 0xFF);
-			buf[i++] = (byte)((heel_fsr >> 8) & 0xFF);
-			buf[i++] = (byte)(toe_fsr & 0xFF);
-			buf[i++] = (byte)((toe_fsr >> 8) & 0xFF);
+			buf[i+=4] = (byte)(heel_fsr & 0xFF);
+			buf[i+=5] = (byte)((heel_fsr >> 8) & 0xFF);
+			buf[i+=6] = (byte)(toe_fsr & 0xFF);
+			buf[i+=7] = (byte)((toe_fsr >> 8) & 0xFF);
 			//  Capture thigh imu data
-			thigh_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
-			thigh_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
-			thigh_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
-			thigh_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
-			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
-			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
-			thigh_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i++], buf[i++], buf[i++], buf[i++]);
-			thigh_imu.read_binary_data(DREG_EULER_PSI, buf[i++], buf[i++], true);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+=8], buf[i+=9], buf[i+=10], buf[i+=11]);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+=12], buf[i+=13], buf[i+=14], buf[i+=15]);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+=16], buf[i+=17], buf[i+=18], buf[i+=19]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+=20], buf[i+=21], buf[i+=22], buf[i+=23]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+=24], buf[i+=25], buf[i+=26], buf[i+=27]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+=28], buf[i+=29], buf[i+=30], buf[i+=31]);
+			thigh_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+=32], buf[i+=33], buf[i+=34], buf[i+=35]);
+			thigh_imu.read_binary_data(DREG_EULER_PSI, buf[i+=36], buf[i+=37], true);
 			//  Capture shank imu data
-			shank_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
-			shank_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
-			shank_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
-			shank_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
-			shank_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
-			shank_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
-			shank_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i++], buf[i++], buf[i++], buf[i++]);
-			shank_imu.read_binary_data(DREG_EULER_PSI, buf[i++], buf[i++], true);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+=38], buf[i+=39], buf[i+=40], buf[i+=41]);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+=42], buf[i+=43], buf[i+=44], buf[i+=45]);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+=46], buf[i+=47], buf[i+=48], buf[i+=49]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+=50], buf[i+=51], buf[i+=52], buf[i+=53]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+=54], buf[i+=55], buf[i+=56], buf[i+=57]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+=58], buf[i+=59], buf[i+=60], buf[i+=61]);
+			shank_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+=62], buf[i+=63], buf[i+=64], buf[i+=65]);
+			shank_imu.read_binary_data(DREG_EULER_PSI, buf[i+=66], buf[i+=67], true);
 			//  Capture foot imu data
-			foot_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
-			foot_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
-			foot_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
-			foot_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
-			foot_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
-			foot_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
-			foot_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i++], buf[i++], buf[i++], buf[i++]);
-			foot_imu.read_binary_data(DREG_EULER_PSI, buf[i++], buf[i++], true);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+=68], buf[i+=69], buf[i+=70], buf[i+=71]);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+=72], buf[i+=73], buf[i+=74], buf[i+=75]);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+=76], buf[i+=77], buf[i+=78], buf[i+=79]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+=80], buf[i+=81], buf[i+=82], buf[i+=83]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+=84], buf[i+=85], buf[i+=86], buf[i+=87]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+=88], buf[i+=89], buf[i+=90], buf[i+=91]);
+			foot_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+=92], buf[i+=93], buf[i+=94], buf[i+=95]);
+			foot_imu.read_binary_data(DREG_EULER_PSI, buf[i+=96], buf[i+=97], true);
 			// Print a newline character for parsing. Try without it first, can just say it's 98 Bytes
 			// buf[i++] = ',';
 		}
@@ -284,9 +283,9 @@ void flush() {
 	// Write data if SD is not busy.
 	if (!sd.card()->isBusy()) {
 		// Find the size of the file
-		unsigned long count = file.size();
+		unsigned long count = binFile.size();
 		// Write the buffer contents to the SD card
-		if (count != binfile.write(buf, count)) {
+		if (count != binFile.write(buf, count)) {
 			errorHalt("Failed to write to log file");
 		}
 	}
@@ -298,13 +297,13 @@ void flush() {
 // (https://www.forward.com.au/pfod/ArduinoProgramming/DataRate/SD_logging/SDToCSV.jar)
 void bin_to_csv() {
 	// Use the hard-coded data_t type to track and parse bytes from binary file
-	data_t binData[FIFO_DIM];
+	data_t * binData[FIFO_DIM];
 	bool header = true;
+	byte lastPct = 0;
 
 	// Check to see if a binary file is open
 	if (!binFile.isOpen()) {
-		Serial.println(F("No current binary file"));
-		return false;
+		errorHalt("No current binary file");
 	}
 	
 	// Open the csv file as write only
@@ -351,40 +350,40 @@ void bin_to_csv() {
 			// Print contents of binData to csv file one block at a time
 			// Data sizes should line up accordingly to the data_t variables
 			// ',' is used for csv delaminating between cells
-			csvFile.print(binData.timestamp); csvFile.write(',');
+			csvFile.print(binData->timestamp); csvFile.write(',');
 			// FSRs
-			csvFile.print(binData.heel_fsr_); csvFile.write(',');
-			csvFile.print(binData.toe_fsr_); csvFile.write(',');
+			csvFile.print(binData->heel_fsr_); csvFile.write(',');
+			csvFile.print(binData->toe_fsr_); csvFile.write(',');
 			// Thigh
-			csvFile.print(binData.thigh_gx); csvFile.write(',');
-			csvFile.print(binData.thigh_gy); csvFile.write(',');
-			csvFile.print(binData.thigh_gz); csvFile.write(',');
-			csvFile.print(binData.thigh_ax); csvFile.write(',');
-			csvFile.print(binData.thigh_ay); csvFile.write(',');
-			csvFile.print(binData.thigh_az); csvFile.write(',');
-			csvFile.print(binData.thigh_roll); csvFile.write(',');
-			csvFile.print(binData.thigh_pitch); csvFile.write(',');
-			csvFile.print(binData.thigh_yaw); csvFile.write(',');
+			csvFile.print(binData->thigh_gx); csvFile.write(',');
+			csvFile.print(binData->thigh_gy); csvFile.write(',');
+			csvFile.print(binData->thigh_gz); csvFile.write(',');
+			csvFile.print(binData->thigh_ax); csvFile.write(',');
+			csvFile.print(binData->thigh_ay); csvFile.write(',');
+			csvFile.print(binData->thigh_az); csvFile.write(',');
+			csvFile.print(binData->thigh_roll); csvFile.write(',');
+			csvFile.print(binData->thigh_pitch); csvFile.write(',');
+			csvFile.print(binData->thigh_yaw); csvFile.write(',');
 			// Shank
-			csvFile.print(binData.shank_gx); csvFile.write(',');
-			csvFile.print(binData.shank_gy); csvFile.write(',');
-			csvFile.print(binData.shank_gz); csvFile.write(',');
-			csvFile.print(binData.shank_ax); csvFile.write(',');
-			csvFile.print(binData.shank_ay); csvFile.write(',');
-			csvFile.print(binData.shank_az); csvFile.write(',');
-			csvFile.print(binData.shank_roll); csvFile.write(',');
-			csvFile.print(binData.shank_pitch); csvFile.write(',');
-			csvFile.print(binData.shank_yaw); csvFile.write(',');
+			csvFile.print(binData->shank_gx); csvFile.write(',');
+			csvFile.print(binData->shank_gy); csvFile.write(',');
+			csvFile.print(binData->shank_gz); csvFile.write(',');
+			csvFile.print(binData->shank_ax); csvFile.write(',');
+			csvFile.print(binData->shank_ay); csvFile.write(',');
+			csvFile.print(binData->shank_az); csvFile.write(',');
+			csvFile.print(binData->shank_roll); csvFile.write(',');
+			csvFile.print(binData->shank_pitch); csvFile.write(',');
+			csvFile.print(binData->shank_yaw); csvFile.write(',');
 			// Foot
-			csvFile.print(binData.foot_gx); csvFile.write(',');
-			csvFile.print(binData.foot_gy); csvFile.write(',');
-			csvFile.print(binData.foot_gz); csvFile.write(',');
-			csvFile.print(binData.foot_ax); csvFile.write(',');
-			csvFile.print(binData.foot_ay); csvFile.write(',');
-			csvFile.print(binData.foot_az); csvFile.write(',');
-			csvFile.print(binData.foot_roll); csvFile.write(',');
-			csvFile.print(binData.foot_pitch); csvFile.write(',');
-			csvFile.print(binData.foot_yaw);
+			csvFile.print(binData->foot_gx); csvFile.write(',');
+			csvFile.print(binData->foot_gy); csvFile.write(',');
+			csvFile.print(binData->foot_gz); csvFile.write(',');
+			csvFile.print(binData->foot_ax); csvFile.write(',');
+			csvFile.print(binData->foot_ay); csvFile.write(',');
+			csvFile.print(binData->foot_az); csvFile.write(',');
+			csvFile.print(binData->foot_roll); csvFile.write(',');
+			csvFile.print(binData->foot_pitch); csvFile.write(',');
+			csvFile.print(binData->foot_yaw);
 			csvFile.println();
 		}
 
