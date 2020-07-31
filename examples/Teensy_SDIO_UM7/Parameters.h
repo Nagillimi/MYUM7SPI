@@ -50,7 +50,7 @@ uint32_t* buf32 = (uint32_t*)buf;
 const uint32_t LOG_INTERVAL_USEC = 2000;
 
 // Size of data in Bytes required to be sent per one transfer.
-const uint32_t DATA_BYTE_WRITE_SIZE = 94;
+const uint32_t DATA_BYTE_WRITE_SIZE = 98;
 // uncomment if using the newline character
 //const uint32_t DATA_BYTE_WRITE_SIZE = 95;
 
