@@ -40,7 +40,7 @@ char csv_file_name[] = "Log.csv";
 struct data_t {
 	// Temporary storage variables for converion
 	int16_t 
-			heel_fsr_, toe_fsr_, 
+			fsr_heel_, fsr_toe_, 
 			thigh_roll, thigh_pitch, thigh_yaw,
 			shank_roll, shank_pitch, shank_yaw,
 			foot_roll, foot_pitch, foot_yaw;
@@ -257,6 +257,7 @@ void flush() {
 void bin_to_csv() {
 	// Use the hard-coded data_t type to track and parse bytes from binary file
 	data_t binData[FIFO_DIM];
+	bool header = true;
 
 	// Check to see if a binary file is open
 	if (!binFile.isOpen()) {
@@ -274,6 +275,9 @@ void bin_to_csv() {
 		errorHalt("binFile.seek failed");
 	}
 
+	// overhead timestamp for conversion progress
+	uint32_t tPct = millis();
+
 	// Loop runs unless csv converion is complete or a character is typed
 	while (true) {		
 		// Read from binary file. nb is the total size of the logging session in bytes (I think)
@@ -289,8 +293,54 @@ void bin_to_csv() {
 
 		// Write to csv file
 		for (size_t i = 0; i < nr; i++) {
-			// printRecord(&csvFile, &binData[i]);
-			
+			// Prints the header for the csv file
+			if(header) {
+				csvFile.print(F("LOG_INTERVAL_USEC,"));
+				csvFile.println(LOG_INTERVAL_USEC);
+				csvFile.print(F(
+					"TIME,FSR_HEEL,FSR_TOE,"
+					"THIGH_GX,THIGH_GY,THIGH_GZ,THIGH_AX,THIGH_AY,THIGH_AZ,THIGH_ROLL,THIGH_PITCH,THIGH_YAW,"
+					"SHANK_GX,SHANK_GY,SHANK_GZ,SHANK_AX,SHANK_AY,SHANK_AZ,SHANK_ROLL,SHANK_PITCH,SHANK_YAW,"
+					"FOOT_GX,FOOT_GY,FOOT_GZ,FOOT_AX,FOOT_AY,FOOT_AZ,FOOT_ROLL,FOOT_PITCH,FOOT_YAW"
+				));
+				csvFile.println();
+				header = false;
+			}
+			// Print contents of binData to csv file one block at a time
+			// Data sizes should line up accordingly to the data_t variables
+			csvFile.print(binData.heel_fsr_); csvFile.write(',');
+			csvFile.print(binData.toe_fsr_); csvFile.write(',');
+
+			csvFile.print(binData.thigh_gx); csvFile.write(',');
+			csvFile.print(binData.thigh_gy); csvFile.write(',');
+			csvFile.print(binData.thigh_gz); csvFile.write(',');
+			csvFile.print(binData.thigh_ax); csvFile.write(',');
+			csvFile.print(binData.thigh_ay); csvFile.write(',');
+			csvFile.print(binData.thigh_az); csvFile.write(',');
+			csvFile.print(binData.thigh_roll); csvFile.write(',');
+			csvFile.print(binData.thigh_pitch); csvFile.write(',');
+			csvFile.print(binData.thigh_yaw); csvFile.write(',');
+
+			csvFile.print(binData.shank_gx); csvFile.write(',');
+			csvFile.print(binData.shank_gy); csvFile.write(',');
+			csvFile.print(binData.shank_gz); csvFile.write(',');
+			csvFile.print(binData.shank_ax); csvFile.write(',');
+			csvFile.print(binData.shank_ay); csvFile.write(',');
+			csvFile.print(binData.shank_az); csvFile.write(',');
+			csvFile.print(binData.shank_roll); csvFile.write(',');
+			csvFile.print(binData.shank_pitch); csvFile.write(',');
+			csvFile.print(binData.shank_yaw); csvFile.write(',');
+
+			csvFile.print(binData.foot_gx); csvFile.write(',');
+			csvFile.print(binData.foot_gy); csvFile.write(',');
+			csvFile.print(binData.foot_gz); csvFile.write(',');
+			csvFile.print(binData.foot_ax); csvFile.write(',');
+			csvFile.print(binData.foot_ay); csvFile.write(',');
+			csvFile.print(binData.foot_az); csvFile.write(',');
+			csvFile.print(binData.foot_roll); csvFile.write(',');
+			csvFile.print(binData.foot_pitch); csvFile.write(',');
+			csvFile.print(binData.foot_yaw);
+			csvFile.println();
 		}
 
 		// Printing the converion progress over Serial,
