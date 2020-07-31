@@ -5,7 +5,7 @@
    - Phillip Johnston's Flexible Logging Library for Arduino
      (https://b9f1cb8b0e.nxcli.net/blog/2020/01/13/building-a-flexible-logging-library-for-arduino-part-3/)
    - https://www.youtube.com/watch?v=zA5sr0qXsaU
-   - Matthew Ford's High Frequency, Long Duration Datalogging ...
+   - Matthew Ford's High Frequency, Long Duration Datalogging project
      (https://www.forward.com.au/pfod/ArduinoProgramming/DataRate/SD_logging/HighFreqLongDur.html)
 
    An implementation of the UM7's SPI mode to allow for logging of:
@@ -65,8 +65,8 @@ void setup() {
 	}
 }
 
-char c, d;
 void loop() {
+	char c, d;
 	// Reoccuring message
 	Serial.println(
 		"\nType '1' to begin logging in FIFO SDIO mode."
@@ -113,19 +113,15 @@ void loop() {
 // Calibrates all the accels and zeroes all the gyros
 void setup_imus(byte rate_) {
 	SPI.begin();
-
 	thigh_imu.set_all_processed_rate(rate_);
 	shank_imu.set_all_processed_rate(rate_);
 	foot_imu.set_all_processed_rate(rate_);
-
 	thigh_imu.set_orientation_rate(rate_);
 	shank_imu.set_orientation_rate(rate_);
 	foot_imu.set_orientation_rate(rate_);
-
 	thigh_imu.calibrate_accelerometers();
 	shank_imu.calibrate_accelerometers();
 	foot_imu.calibrate_accelerometers();
-
 	thigh_imu.zero_gyros();
 	shank_imu.zero_gyros();
 	foot_imu.zero_gyros();
@@ -274,7 +270,7 @@ void bin_to_csv() {
 	if (!binFile.seekSet(512)) {
 		errorHalt("binFile.seek failed");
 	}
-
+	
 	// overhead timestamp for conversion progress
 	uint32_t tPct = millis();
 
@@ -290,7 +286,6 @@ void bin_to_csv() {
 		
 		// nr is the number of instances found for binData, should be big
 		size_t nr = nb/sizeof(data_t);
-
 		// Write to csv file
 		for (size_t i = 0; i < nr; i++) {
 			// Prints the header for the csv file
@@ -366,6 +361,6 @@ void bin_to_csv() {
 			break;
 		}
     }
-	
+	// Close csv file after write is complete
 	csvFile.close();
 }
