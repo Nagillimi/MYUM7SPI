@@ -13,13 +13,14 @@
    - 2 FSR's @ 500 Hz
    
    Notes
-   1. A txt file is used instead of a bin file since datasets have three sizes
-      and the highest dataset value is used for each variable sent to the buffer (4B).
-	  Shown:
-		  comma = 1B
-		  euler data & analog data = 2B
-		  gyro data & accel data = 4B
-	2. 
+   1. A text file was used originally instead of a binary file since the datasets had three sizes.
+      The highest dataset value was used for each variable sent to the buffer (4B), which resulted
+	  in a massive read function (464 Bytes with commas for one transfer).
+	  
+	  A binary file is now being used to save memory space in the program and to allow for more
+	  efficient SD writes. An entire transfer now only takes up 95 Bytes
+	2. There's no overrun check in this example, so missed packets aren't tracked
+	3. 
 */
 
 #include "SdFat.h"
@@ -36,6 +37,19 @@ MYUM7SPI foot_imu(38);
 char bin_file_name[] = "SdioLogger.bin";
 char csv_file_name[] = "Log.csv";
 
+struct data_t {
+	// Temporary storage variables for converion
+	int16_t 
+			heel_fsr_, toe_fsr_, 
+			thigh_roll, thigh_pitch, thigh_yaw,
+			shank_roll, shank_pitch, shank_yaw,
+			foot_roll, foot_pitch, foot_yaw;
+		int32_t
+			thigh_gx, thigh_gy, thigh_gz, thigh_ax, thigh_ay, thigh_az,
+			shank_gx, shank_gy, shank_gz, shank_ax, shank_ay, shank_az,
+			foot_gx, foot_gy, foot_gz, foot_ax, foot_ay, foot_az;
+};
+
 void setup() {
 	Serial.begin(9600);
 	while (!Serial); // Serial acts as an on switch
@@ -45,7 +59,7 @@ void setup() {
 	pinMode(A1, INPUT);
 	setup_imus(250);
 
-	// Start SD card
+	// Init SD card
 	if (!sd.begin(SdioConfig(FIFO_SDIO))) {
 		errorHalt("SD begin failed");
 	}
@@ -53,7 +67,7 @@ void setup() {
 
 char c, d;
 void loop() {
-	// First message
+	// Reoccuring message
 	Serial.println(
 		"\nType '1' to begin logging in FIFO SDIO mode."
 		"\n     '2' to convert binary file to csv file."
@@ -63,6 +77,7 @@ void loop() {
 	}
 	// Entering logging mode
 	c = Serial.read();
+
 	if (c == '1') {
 		Serial.println(
 			"\nFIFO SDIO mode."
@@ -70,8 +85,8 @@ void loop() {
 		);
 
 		// Open file as WRITE ONLY
-		if (!binFile.open(bin_file_name, O_WRITE | O_CREAT)) {
-			errorHalt("file open failed");
+		if (!binFile.open(bin_file_name, O_RDWR | O_CREAT)) {
+			errorHalt("binary file open failed");
 		}
 
 		// Format file
@@ -82,6 +97,10 @@ void loop() {
 		log_data();
 		file.close();
 	} else if (c == '2') {
+		Serial.println(
+			"\nConverting binary file to csv file."
+			"\nType any character to stop conversion."
+		);
 		bin_to_csv();
 	} else {
 		Serial.println("Invalid input");
@@ -90,6 +109,8 @@ void loop() {
 	delay(2000);
 }
 
+// Sets up the 3 UM7s processed and euler rates
+// Calibrates all the accels and zeroes all the gyros
 void setup_imus(byte rate_) {
 	SPI.begin();
 
@@ -110,6 +131,8 @@ void setup_imus(byte rate_) {
 	foot_imu.zero_gyros();
 }
 
+// Generic error function, searches the SdFat lib for error codes and prints them along 
+// with the passed message (msg)
 void errorHalt(const char* msg) {
 	Serial.print("Error: ");
 	Serial.println(msg);
@@ -137,6 +160,8 @@ void log_data() {
 
 	// Time to log next record.
 	uint32_t logTime = micros();
+	
+	// Loop runs forever unless any character is typed or max file size is hit
 	while (1) {
 		// Time for next data record.
 		logTime += LOG_INTERVAL_USEC;
@@ -153,53 +178,52 @@ void log_data() {
 		}
 
 		for (int i = 0; i < FIFO_DIM; i += DATA_BYTE_WRITE_SIZE) {
-			// Capture the imu data from the UM7s
-			thigh_imu.get_vals_data();
-			shank_imu.get_vals_data();
-			foot_imu.get_vals_data();
+			// Capture FSR analog data			
+			heel_fsr = analogRead(heel_fsr_pin);
+			toe_fsr = analogRead(toe_fsr_pin);
 
-			// 29 * 2 * 32 bits / 8 bits per Byte = 232 Bytes/transfer without
-			// parsing. It's 464 Bytes/transfer with commas & newlines.
-			// This leaves 48 Bytes in the 512 Byte buffer...
-			// Get better!!
+			// FSR and euler data are only 16bits, but they take up 32 to sync with the buf32 array
+			// Total data size is 94 Bytes
 
-			// FSR analog data
-			buf32[i] = analogRead(heel_fsr); buf32[i++] = ',';
-			byf32[i++] = analogRead(toe_fsr); buf32[i++] = ',';
-			// thigh data
-			buf32[i++] = thigh_imu.gyro_x; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.gyro_y; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.gyro_z; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.accel_x; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.accel_y; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.accel_z; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.roll; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.pitch; buf32[i++] = ',';
-			buf32[i++] = thigh_imu.yaw; buf32[i++] = ',';
-			// shank data
-			buf32[i++] = shank_imu.gyro_x; buf32[i++] = ',';
-			buf32[i++] = shank_imu.gyro_y; buf32[i++] = ',';
-			buf32[i++] = shank_imu.gyro_z; buf32[i++] = ',';
-			buf32[i++] = shank_imu.accel_x; buf32[i++] = ',';
-			buf32[i++] = shank_imu.accel_y; buf32[i++] = ',';
-			buf32[i++] = shank_imu.accel_z; buf32[i++] = ',';
-			buf32[i++] = shank_imu.roll; buf32[i++] = ',';
-			buf32[i++] = shank_imu.pitch; buf32[i++] = ',';
-			buf32[i++] = shank_imu.yaw; buf32[i++] = ',';
-			// foot data
-			buf32[i++] = foot_imu.gyro_x; buf32[i++] = ',';
-			buf32[i++] = foot_imu.gyro_y; buf32[i++] = ',';
-			buf32[i++] = foot_imu.gyro_z; buf32[i++] = ',';
-			buf32[i++] = foot_imu.accel_x; buf32[i++] = ',';
-			buf32[i++] = foot_imu.accel_y; buf32[i++] = ',';
-			buf32[i++] = foot_imu.accel_z; buf32[i++] = ',';
-			buf32[i++] = foot_imu.roll; buf32[i++] = ',';
-			buf32[i++] = foot_imu.pitch; buf32[i++] = ',';
-			buf32[i++] = foot_imu.yaw; buf32[i++] = '\n';
+			// FSR data
+			buf[i] = (byte)(heel_fsr & 0xFF);
+			buf[i++] = (byte)((heel_fsr >> 8) & 0xFF);
+			buf[i++] = (byte)(toe_fsr & 0xFF);
+			buf[i++] = (byte)((toe_fsr >> 8) & 0xFF);
+			//  Capture thigh imu data
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
+			thigh_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i++], buf[i++], buf[i++], buf[i++]);
+			thigh_imu.read_binary_data(DREG_EULER_PSI, buf[i++], buf[i++], true);
+			//  Capture shank imu data
+			shank_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
+			shank_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i++], buf[i++], buf[i++], buf[i++]);
+			shank_imu.read_binary_data(DREG_EULER_PSI, buf[i++], buf[i++], true);
+			//  Capture foot imu data
+			foot_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i++], buf[i++], buf[i++], buf[i++]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i++], buf[i++], buf[i++], buf[i++]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i++], buf[i++], buf[i++], buf[i++]);
+			foot_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i++], buf[i++], buf[i++], buf[i++]);
+			foot_imu.read_binary_data(DREG_EULER_PSI, buf[i++], buf[i++], true);
+			// Print a newline character for parsing. Try without it first, can just say it's 94 Bytes
+			// buf[i++] = ',';
 		}
+		// Flush the 512 Byte buffer to the SD card
 		flush();
 
-		// Character typed over Serial triggers program stop
+		// Character typed over Serial triggers function stop
 		if (Serial.available()) {
 			break;
 		}
@@ -210,9 +234,11 @@ void log_data() {
 
 	Serial.print(("File size: "));
 	// Warning cast used for print since fileSize is uint64_t.
+	// Could use sizeof()
 	Serial.print((uint32_t)binFile.fileSize());
 }
 
+// Flushes the filled buffer to the SD card
 void flush() {
 	// Write data if SD is not busy.
 	if (!sd.card()->isBusy()) {
@@ -226,7 +252,12 @@ void flush() {
 }
 
 // Similar to printRecord() function in ExFatLogger from SdFat library
+// Converts bin files to csv files custom for this application
+// May need to use a console application for large files
 void bin_to_csv() {
+	// Use the hard-coded data_t type to track and parse bytes from binary file
+	data_t binData[FIFO_DIM];
+
 	// Check to see if a binary file is open
 	if (!binFile.isOpen()) {
 		Serial.println(F("No current binary file"));
@@ -235,25 +266,34 @@ void bin_to_csv() {
 	
 	// Open the csv file as WRONLY
 	if (!csvFile.open(csvName, O_WRONLY | O_CREAT | O_TRUNC)) {
-		error("open csvFile failed");
+		errorHalt("csv file open failed");
 	}
 	
 	// Set the seek to 512 Bytes
 	if (!binFile.seekSet(512)) {
-		error("binFile.seek faile");
+		errorHalt("binFile.seek failed");
 	}
 
-	while (!Serial.available() && binFile.available()) {
+	// Loop runs unless csv converion is complete or a character is typed
+	while (true) {		
+		// Read from binary file. nb is the total size of the logging session in bytes (I think)
 		int nb = binFile.read(binData, sizeof(binData));
+
+		// Return error if 0 or -1 is read (no data in binary)
 		if (nb <= 0 ) {
-			error("read binFile failed");
+			errorHalt("read binFile failed");
 		}
+		
+		// nr is the number of instances found for binData, should be big
 		size_t nr = nb/sizeof(data_t);
+
+		// Write to csv file
 		for (size_t i = 0; i < nr; i++) {
-			printRecord(&csvFile, &binData[i]);
+			// printRecord(&csvFile, &binData[i]);
+			
 		}
 
-		// Printing the % over Serial
+		// Printing the converion progress over Serial,
 		if ((millis() - tPct) > 1000) {
 		uint8_t pct = binFile.curPosition()/(binFile.fileSize()/100);
 		if (pct != lastPct) {
@@ -263,7 +303,19 @@ void bin_to_csv() {
 			Serial.println('%');
 			csvFile.sync();
 		}
-    }
 
+		// Once bin file is completely read, it triggers function stop
+		if (!binFile.available()) {
+			Serial.println("\nBinary file conversion complete.");
+			break;
+		}
+
+		// Character typed over Serial triggers function stop
+		if (Serial.available()) {
+			Serial.println("\ncsv file conversion aborted.");
+			break;
+		}
+    }
+	
 	csvFile.close();
 }

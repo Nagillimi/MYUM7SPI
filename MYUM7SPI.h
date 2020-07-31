@@ -167,6 +167,8 @@ public:
 	void get_all_processed_data();
 	void get_all_orientation_data();
 	void get_vals_data();
+	void read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3);
+	void read_binary_data(byte address, byte b0, byte b1, bool first_half);
 
 	//////////////////////////////////
 	//		 COMMAND FUNCTIONS		//

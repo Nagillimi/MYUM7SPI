@@ -389,9 +389,71 @@ int32_t MYUM7SPI::read_register(byte address) {
 	return(result);
 }
 
-/*
-	Writes to a configuration register, sends the contents of "contents_" to the proper bytes.
-*/
+
+// Used for the SD example in order to write binary data directly,
+// conversion to a csv file is done after data collection. 
+// This is an overloaded function to fit the various sizes of datasets from the UM7
+// This function is for 32bit registers
+void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3) {
+	byte inByte = 0;
+
+	digitalWrite(cs, LOW);
+
+	SPI.transfer(READ);
+	delayMicroseconds(5);
+
+	SPI.transfer(address);
+	delayMicroseconds(5);
+
+	b3 = SPI.transfer(0x00);
+	delayMicroseconds(5);
+
+	b2 = SPI.transfer(0x00);
+	delayMicroseconds(5);
+
+	b1 = SPI.transfer(0x00);
+	delayMicroseconds(5);
+
+	b0 = SPI.transfer(0x00);
+	delayMicroseconds(5);
+
+	digitalWrite(cs, HIGH);
+	return(result);
+}
+
+// Used for the SD example in order to write binary data directly,
+// conversion to a csv file is done after data collection. 
+// This is an overloaded function to fit the various sizes of datasets from the UM7
+// This function is for 16bit registers
+void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half) {
+	byte inByte = 0;
+
+	digitalWrite(cs, LOW);
+
+	SPI.transfer(READ);
+	delayMicroseconds(5);
+
+	SPI.transfer(address);
+	delayMicroseconds(5);
+
+	if (!first_half) {
+		SPI.transfer(0x00);
+		delayMicroseconds(5);
+
+		SPI.transfer(0x00);
+		delayMicroseconds(5);
+	}
+	b1 = SPI.transfer(0x00);
+	delayMicroseconds(5);
+
+	b0 = SPI.transfer(0x00);
+	delayMicroseconds(5);
+
+	digitalWrite(cs, HIGH);
+	return(result);
+}
+
+// Writes to a configuration register, sends the contents of "contents_" to the proper bytes.
 void MYUM7SPI::write_register(byte address, uint32_t contents_) {
 	intval contents;
 	contents.val = contents_;
@@ -412,9 +474,7 @@ void MYUM7SPI::write_register(byte address, uint32_t contents_) {
 	digitalWrite(cs, HIGH);
 }
 
-/*
-	Writes to a command register. Since no contents are required, the SPI bus passes 0x00 over the MOSI line.
-*/
+// Writes to a command register. Since no contents are required, the SPI bus passes 0x00 over the MOSI line.
 void MYUM7SPI::write_register(byte address) {
 	digitalWrite(cs, LOW);
 

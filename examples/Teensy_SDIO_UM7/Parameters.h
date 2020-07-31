@@ -49,10 +49,10 @@ uint32_t* buf32 = (uint32_t*)buf;
 // Latency
 const uint32_t LOG_INTERVAL_USEC = 2000;
 
-// Size of data required to be sent per one transfer. 
-// Val's 29 datasets come in to 58 4Byte usigned integers.
-// (because of commas parsing the data)
-const uint32_t DATA_BYTE_WRITE_SIZE = 29*2;
+// Size of data in Bytes required to be sent per one transfer.
+const uint32_t DATA_BYTE_WRITE_SIZE = 94;
+// uncomment if using the newline character
+//const uint32_t DATA_BYTE_WRITE_SIZE = 95;
 
 // Set USE_RTC nonzero for file timestamps.
 // RAM use will be marginal on Uno with RTClib.
