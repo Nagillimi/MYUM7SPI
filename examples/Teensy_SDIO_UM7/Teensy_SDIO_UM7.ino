@@ -33,7 +33,8 @@ MYUM7SPI thigh_imu(36);
 MYUM7SPI shank_imu(37);
 MYUM7SPI foot_imu(38);
 
-char file_name[] = "SdioLogger.txt";
+char bin_file_name[] = "SdioLogger.bin";
+char csv_file_name[] = "Log.csv";
 
 void setup() {
 	Serial.begin(9600);
@@ -53,7 +54,10 @@ void setup() {
 char c, d;
 void loop() {
 	// First message
-	Serial.println("\nType '1' to begin logging in FIFO SDIO mode.");
+	Serial.println(
+		"\nType '1' to begin logging in FIFO SDIO mode."
+		"\n     '2' to convert binary file to csv file."
+		);
 	// Wait for Serial input
 	while (!Serial.available()) {
 	}
@@ -66,7 +70,7 @@ void loop() {
 		);
 
 		// Open file as WRITE ONLY
-		if (!file.open(file_name, O_WRITE | O_CREAT)) {
+		if (!binFile.open(bin_file_name, O_WRITE | O_CREAT)) {
 			errorHalt("file open failed");
 		}
 
@@ -77,14 +81,13 @@ void loop() {
 
 		log_data();
 		file.close();
-
-		// Wait forever, program done.
-		while (1);
-
+	} else if (c == '2') {
+		bin_to_csv();
 	} else {
 		Serial.println("Invalid input");
 		return;
 	}
+	delay(2000);
 }
 
 void setup_imus(byte rate_) {
@@ -216,8 +219,51 @@ void flush() {
 		// Find the size of the file
 		unsigned long count = file.size();
 		// Write the buffer contents to the SD card
-		if (count != file.write(buf, count)) {
+		if (count != binfile.write(buf, count)) {
 			errorHalt("Failed to write to log file");
 		}
 	}
+}
+
+// Similar to printRecord() function in ExFatLogger from SdFat library
+void bin_to_csv() {
+	// Check to see if a binary file is open
+	if (!binFile.isOpen()) {
+		Serial.println(F("No current binary file"));
+		return false;
+	}
+	
+	// Open the csv file as WRONLY
+	if (!csvFile.open(csvName, O_WRONLY | O_CREAT | O_TRUNC)) {
+		error("open csvFile failed");
+	}
+	
+	// Set the seek to 512 Bytes
+	if (!binFile.seekSet(512)) {
+		error("binFile.seek faile");
+	}
+
+	while (!Serial.available() && binFile.available()) {
+		int nb = binFile.read(binData, sizeof(binData));
+		if (nb <= 0 ) {
+			error("read binFile failed");
+		}
+		size_t nr = nb/sizeof(data_t);
+		for (size_t i = 0; i < nr; i++) {
+			printRecord(&csvFile, &binData[i]);
+		}
+
+		// Printing the % over Serial
+		if ((millis() - tPct) > 1000) {
+		uint8_t pct = binFile.curPosition()/(binFile.fileSize()/100);
+		if (pct != lastPct) {
+			tPct = millis();
+			lastPct = pct;
+			Serial.print(pct, DEC);
+			Serial.println('%');
+			csvFile.sync();
+		}
+    }
+
+	csvFile.close();
 }

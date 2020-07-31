@@ -18,18 +18,23 @@ const size_t BUF_DIM = 32768;
 // 4 GiB file. Maybe make a little bigger?
 const uint32_t FILE_SIZE = 131072UL * BUF_DIM;
 
+// Init the sd and binFile parameters
 #if SD_FAT_TYPE == 0
 SdFat sd;
-File file;
+File binFile;
+File csvFile;
 #elif SD_FAT_TYPE == 1
 SdFat32 sd;
-File32 file;
+File32 binFile;
+File32 csvFile;
 #elif SD_FAT_TYPE == 2
 SdExFat sd;
-ExFile file;
+ExFile binFile;
+ExFile csvFile;
 #elif SD_FAT_TYPE == 3
 SdFs sd;
-FsFile file;
+FsFile binFile;
+FsFile csvFile;
 #else  // SD_FAT_TYPE
 #error Invalid SD_FAT_TYPE
 #endif  // SD_FAT_TYPE
