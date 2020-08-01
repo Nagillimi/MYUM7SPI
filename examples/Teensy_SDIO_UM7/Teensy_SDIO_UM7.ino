@@ -100,7 +100,7 @@ void loop() {
 	Serial.println(
 		"\nType '1' to begin logging in FIFO SDIO mode."
 		"\n     '2' to convert binary file to csv file."
-		);
+	);
 	// Wait for Serial input
 	while (!Serial.available()) {
 	}
@@ -110,22 +110,32 @@ void loop() {
 	if (c == '1') {
 		Serial.println(
 			"\nNow logging."
-			"\nType any character to stop."
+			"\nType any character to stop..."
 		);
+    
+		do {
+			delay(10);
+		} while (Serial.available() && Serial.read());
+    
 		create_bin_file();
 		log_data();
 	} else if (c == '2') {
 		Serial.println(
 			"\nConverting binary log file to csv file."
-			"\nType any character to stop conversion."
+			"\nType any character to stop conversion..."
 		);
+
+		do {
+			delay(10);
+		} while (Serial.available() && Serial.read());
+    
 		create_csv_file();
 		bin_to_csv();
 	} else {
 		Serial.println("Invalid input");
 		return;
 	}
-	delay(2000);
+	delay(1000);
 }
 // ---------------------------------------------------------------------------------------------------------
 // Sets up the 3 UM7s processed and euler rates
@@ -290,7 +300,7 @@ void log_data() {
 		}
 		// Flush the buffer to the SD card if SD is not busy.
 		if (!sd.card()->isBusy()) {
-			flush();
+			flush_buffer();
 			// Character typed over Serial triggers function stop
 			if (Serial.available()) {
 				break;
@@ -307,11 +317,12 @@ void log_data() {
 	// Could use this value for bin_to_csv()? Yep
 	write_size = binFile.fileSize();
 	Serial.print(write_size);
+	Serial.println(" bytes");
 }
 // ---------------------------------------------------------------------------------------------------------
 // Flushes the filled buffer to the SD card
 // Buffer is then overwritten instead of cleared
-void flush() {
+void flush_buffer() {
   // Find the size of the file
   unsigned long count = binFile.size();
   // Write the buffer contents to the SD card
@@ -322,7 +333,7 @@ void flush() {
 // ---------------------------------------------------------------------------------------------------------
 // Creates a csv file associated with file_name
 void create_csv_file() {
-	char csv_file_name[];	
+	char csv_file_name[FILE_NAME_DIM];	
 
 	// Check to see if a binary file is open
 	if (!binFile.isOpen()) {
@@ -354,11 +365,6 @@ void bin_to_csv() {
 	// header trace
 	bool header = true;
 	byte lastPct = 0;
-
-	// Set the seek to 512 Bytes
-	if (!binFile.seekSet(512)) {
-		errorHalt("binFile.seek failed");
-	}
 	
 	// overhead timestamp for conversion progress
 	uint32_t tPct = millis();
