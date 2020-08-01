@@ -36,8 +36,7 @@ MYUM7SPI thigh_imu(36);
 MYUM7SPI shank_imu(37);
 MYUM7SPI foot_imu(38);
 
-char bin_file_name[] = "SdioLogger.bin";
-char csv_file_name[] = "Log.csv";
+char bin_name[] = "SdioLogger00.bin";
 
 struct data_t {
 	uint32_t timestamp;
@@ -113,24 +112,14 @@ void loop() {
 			"\nNow logging."
 			"\nType any character to stop."
 		);
-
-		// Open binary file as read/write
-		if (!binFile.open(bin_file_name, O_RDWR | O_CREAT)) {
-			errorHalt("binary file open failed");
-		}
-
-		// Optimize file
-		if (!binFile.truncate()) {
-			errorHalt("truncate failed");
-		}
-
+		create_bin_file();
 		log_data();
-		binFile.close();
 	} else if (c == '2') {
 		Serial.println(
 			"\nConverting binary log file to csv file."
 			"\nType any character to stop conversion."
 		);
+		create_csv_file();
 		bin_to_csv();
 	} else {
 		Serial.println("Invalid input");
@@ -172,6 +161,41 @@ void errorHalt(const char* msg) {
 	}
 	// Halts program
 	while (true);
+}
+// ---------------------------------------------------------------------------------------------------------
+// Creates a binary file associated with file_name
+void create_bin_file() {
+	// Close any instance of binFile before opening
+	binFile.close();
+
+	// Creates a new file name iteration
+    while (sd.exists(bin_name)) {
+      char* p = strchr(bin_name, '.');
+      if (!p) {
+        errorHalt("no dot in filename");
+      }
+      while (true) {
+        p--;
+        if (p < bin_name || *p < '0' || *p > '9') {
+          errorHalt("Can't create file name");
+        }
+        if (p[0] != '9') {
+          p[0]++;
+          break;
+        }
+        p[0] = '0';
+      }
+    }
+
+	// Open binary file as read/write
+	if (!binFile.open(bin_name, O_RDWR | O_CREAT)) {
+		errorHalt("binary file open failed");
+	}
+
+	// Optimize file
+	if (!binFile.preAllocate(PREALLOCATE_SIZE)) {
+		errorHalt("preAllocate failed");
+	}
 }
 // ---------------------------------------------------------------------------------------------------------
 // UM7's will just duplicate the data, since this will operate at 500 Hz
@@ -296,6 +320,29 @@ void flush() {
   }
 }
 // ---------------------------------------------------------------------------------------------------------
+// Creates a csv file associated with file_name
+void create_csv_file() {
+	char csv_file_name[];	
+
+	// Check to see if a binary file is open
+	if (!binFile.isOpen()) {
+		errorHalt("No current binary file");
+	}
+	
+	binFile.getName(csv_file_name, sizeof(csv_file_name));
+
+	char* dot = strchr(csv_file_name, '.');
+	if (!dot) {
+		errorHalt("no dot in filename");
+	}
+	strcpy(dot + 1, "csv");
+
+	// Open the csv file as write only
+	if (!csvFile.open(csv_file_name, O_WRONLY | O_CREAT | O_TRUNC)) {
+		errorHalt("csv file open failed");
+	}
+}
+// ---------------------------------------------------------------------------------------------------------
 // Similar to printRecord() function in ExFatLogger from SdFat library
 // Converts bin files to csv files custom for this application
 // May need to use a console application for large files, found here:
@@ -308,16 +355,6 @@ void bin_to_csv() {
 	bool header = true;
 	byte lastPct = 0;
 
-	// Check to see if a binary file is open
-	if (!binFile.isOpen()) {
-		errorHalt("No current binary file");
-	}
-	
-	// Open the csv file as write only
-	if (!csvFile.open(csv_file_name, O_WRONLY | O_CREAT | O_TRUNC)) {
-		errorHalt("csv file open failed");
-	}
-	
 	// Set the seek to 512 Bytes
 	if (!binFile.seekSet(512)) {
 		errorHalt("binFile.seek failed");

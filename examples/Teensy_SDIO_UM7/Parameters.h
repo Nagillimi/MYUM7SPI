@@ -16,7 +16,7 @@ const uint8_t SD_CS_PIN = SDCARD_SS_PIN;
 const size_t BUF_DIM = 32768;
 
 // 4 GiB file. Maybe make a little bigger?
-const uint32_t FILE_SIZE = 4194304;
+const uint32_t PREALLOCATE_SIZE = 4194304;
 
 // Init the sd and binFile parameters
 #if SD_FAT_TYPE == 0
@@ -38,6 +38,9 @@ FsFile csvFile;
 #else  // SD_FAT_TYPE
 #error Invalid SD_FAT_TYPE
 #endif  // SD_FAT_TYPE
+
+// File name dimension
+const uint8_t FILE_NAME_DIM = 24;
 
 // BYTE BUFFER
 uint8_t buf[BUF_DIM];
