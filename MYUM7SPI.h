@@ -231,8 +231,8 @@ private:
 	//		INTERNAL FUNCTIONS		//
 	//////////////////////////////////
 
-	int16_t read_register(uint16_t address, bool first_half);
-	int32_t read_register(uint16_t address);
+	int16_t read_register(byte address, bool first_half);
+	int32_t read_register(byte address);
 
 	void write_register(byte address, uint32_t contents_);
 	void write_register(byte address);

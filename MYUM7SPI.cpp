@@ -418,7 +418,6 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3
 	delayMicroseconds(5);
 
 	digitalWrite(cs, HIGH);
-	return(result);
 }
 
 // Used for the SD example in order to write binary data directly,
@@ -450,7 +449,6 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half)
 	delayMicroseconds(5);
 
 	digitalWrite(cs, HIGH);
-	return(result);
 }
 
 // Writes to a configuration register, sends the contents of "contents_" to the proper bytes.

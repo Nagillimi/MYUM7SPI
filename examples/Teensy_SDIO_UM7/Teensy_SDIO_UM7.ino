@@ -221,41 +221,41 @@ void log_data() {
 
 			// Timestamp data, uint32_t parsed into bytes
 			buf[i] = (byte)(t & 0xFF);
-			buf[i+=1] = (byte)((t >> 8) & 0xFF);
-			buf[i+=2] = (byte)((t >> 16) & 0xFF);
-			buf[i+=3] = (byte)((t >> 24) & 0xFF);
+			buf[i+1] = (byte)((t >> 8) & 0xFF);
+			buf[i+2] = (byte)((t >> 16) & 0xFF);
+			buf[i+3] = (byte)((t >> 24) & 0xFF);
 			// FSR data, 2x uint16_t parsed into bytes
-			buf[i+=4] = (byte)(fsr_heel & 0xFF);
-			buf[i+=5] = (byte)((fsr_heel >> 8) & 0xFF);
-			buf[i+=6] = (byte)(fsr_toe & 0xFF);
-			buf[i+=7] = (byte)((fsr_toe >> 8) & 0xFF);
+			buf[i+4] = (byte)(fsr_heel & 0xFF);
+			buf[i+5] = (byte)((fsr_heel >> 8) & 0xFF);
+			buf[i+6] = (byte)(fsr_toe & 0xFF);
+			buf[i+7] = (byte)((fsr_toe >> 8) & 0xFF);
 			//  Capture thigh imu data
-			thigh_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+=8], buf[i+=9], buf[i+=10], buf[i+=11]);
-			thigh_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+=12], buf[i+=13], buf[i+=14], buf[i+=15]);
-			thigh_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+=16], buf[i+=17], buf[i+=18], buf[i+=19]);
-			thigh_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+=20], buf[i+=21], buf[i+=22], buf[i+=23]);
-			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+=24], buf[i+=25], buf[i+=26], buf[i+=27]);
-			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+=28], buf[i+=29], buf[i+=30], buf[i+=31]);
-			thigh_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+=32], buf[i+=33], buf[i+=34], buf[i+=35]);
-			thigh_imu.read_binary_data(DREG_EULER_PSI, buf[i+=36], buf[i+=37], true);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+8], buf[i+9], buf[i+10], buf[i+11]);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+12], buf[i+13], buf[i+14], buf[i+15]);
+			thigh_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+16], buf[i+17], buf[i+18], buf[i+19]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+20], buf[i+21], buf[i+22], buf[i+23]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+24], buf[i+25], buf[i+26], buf[i+27]);
+			thigh_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+28], buf[i+29], buf[i+30], buf[i+31]);
+			thigh_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+32], buf[i+33], buf[i+34], buf[i+35]);
+			thigh_imu.read_binary_data(DREG_EULER_PSI, buf[i+36], buf[i+37], true);
 			//  Capture shank imu data
-			shank_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+=38], buf[i+=39], buf[i+=40], buf[i+=41]);
-			shank_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+=42], buf[i+=43], buf[i+=44], buf[i+=45]);
-			shank_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+=46], buf[i+=47], buf[i+=48], buf[i+=49]);
-			shank_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+=50], buf[i+=51], buf[i+=52], buf[i+=53]);
-			shank_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+=54], buf[i+=55], buf[i+=56], buf[i+=57]);
-			shank_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+=58], buf[i+=59], buf[i+=60], buf[i+=61]);
-			shank_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+=62], buf[i+=63], buf[i+=64], buf[i+=65]);
-			shank_imu.read_binary_data(DREG_EULER_PSI, buf[i+=66], buf[i+=67], true);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+38], buf[i+39], buf[i+40], buf[i+41]);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+42], buf[i+43], buf[i+44], buf[i+45]);
+			shank_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+46], buf[i+47], buf[i+48], buf[i+49]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+50], buf[i+51], buf[i+52], buf[i+53]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+54], buf[i+55], buf[i+56], buf[i+57]);
+			shank_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+58], buf[i+59], buf[i+60], buf[i+61]);
+			shank_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+62], buf[i+63], buf[i+64], buf[i+65]);
+			shank_imu.read_binary_data(DREG_EULER_PSI, buf[i+66], buf[i+67], true);
 			//  Capture foot imu data
-			foot_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+=68], buf[i+=69], buf[i+=70], buf[i+=71]);
-			foot_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+=72], buf[i+=73], buf[i+=74], buf[i+=75]);
-			foot_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+=76], buf[i+=77], buf[i+=78], buf[i+=79]);
-			foot_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+=80], buf[i+=81], buf[i+=82], buf[i+=83]);
-			foot_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+=84], buf[i+=85], buf[i+=86], buf[i+=87]);
-			foot_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+=88], buf[i+=89], buf[i+=90], buf[i+=91]);
-			foot_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+=92], buf[i+=93], buf[i+=94], buf[i+=95]);
-			foot_imu.read_binary_data(DREG_EULER_PSI, buf[i+=96], buf[i+=97], true);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_X, buf[i+68], buf[i+69], buf[i+70], buf[i+71]);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_Y, buf[i+72], buf[i+73], buf[i+74], buf[i+75]);
+			foot_imu.read_binary_data(DREG_GYRO_PROC_Z, buf[i+76], buf[i+77], buf[i+78], buf[i+79]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_X, buf[i+80], buf[i+81], buf[i+82], buf[i+83]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_Y, buf[i+84], buf[i+85], buf[i+86], buf[i+87]);
+			foot_imu.read_binary_data(DREG_ACCEL_PROC_Z, buf[i+88], buf[i+89], buf[i+90], buf[i+91]);
+			foot_imu.read_binary_data(DREG_EULER_PHI_THETA, buf[i+92], buf[i+93], buf[i+94], buf[i+95]);
+			foot_imu.read_binary_data(DREG_EULER_PSI, buf[i+96], buf[i+97], true);
 			// Print a newline character for parsing. Try without it first, can just say it's 98 Bytes
 			// buf[i++] = ',';
 		}
