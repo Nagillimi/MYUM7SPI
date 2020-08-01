@@ -395,8 +395,6 @@ int32_t MYUM7SPI::read_register(byte address) {
 // This is an overloaded function to fit the various sizes of datasets from the UM7
 // This function is for 32bit registers
 void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3) {
-	byte inByte = 0;
-
 	digitalWrite(cs, LOW);
 
 	SPI.transfer(READ);
@@ -425,8 +423,6 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3
 // This is an overloaded function to fit the various sizes of datasets from the UM7
 // This function is for 16bit registers
 void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half) {
-	byte inByte = 0;
-
 	digitalWrite(cs, LOW);
 
 	SPI.transfer(READ);
