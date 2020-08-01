@@ -46,10 +46,10 @@ uint8_t buf[BUF_DIM];
 // size is 1024 B for a 32 KiB uint8_t buffer
 uint32_t* buf32 = (uint32_t*)buf;
 
-uint32_t FILE
+uint32_t write_size;
 
 // Latency in usec
-const uint32_t LOG_INTERVAL_USEC = 2000;
+uint32_t LOG_INTERVAL_USEC = 2000;
 
 // Size of data in Bytes required to be sent per one transfer.
 const uint32_t DATA_BYTE_WRITE_SIZE = 98;

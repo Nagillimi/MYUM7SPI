@@ -274,8 +274,8 @@ void log_data() {
 	Serial.print(("File size: "));
 	// Warning cast used for print since fileSize is uint64_t.
 	// Could use this value for bin_to_csv()? Yep
-	
-	Serial.print((uint32_t)binFile.fileSize());
+	write_size = binFile.fileSize()
+	Serial.print(write_size);
 }
 // ---------------------------------------------------------------------------------------------------------
 // Flushes the filled buffer to the SD card
@@ -299,7 +299,7 @@ void flush() {
 void bin_to_csv() {
 	// Use the hard-coded data_t type to track and parse bytes from binary file
 	// This should be a huge array
-	data_t binData[FIFO_DIM];
+	data_t binData[write_size/DATA_BYTE_WRITE_SIZE];
 	// header trace
 	bool header = true;
 	byte lastPct = 0;
@@ -355,8 +355,8 @@ void bin_to_csv() {
 			// ',' is used for csv delaminating between cells
 			csvFile.print(binData[i].timestamp); csvFile.write(',');
 			// FSRs
-			csvFile.print(binData[i].heel_fsr_); csvFile.write(',');
-			csvFile.print(binData[i].toe_fsr_); csvFile.write(',');
+			csvFile.print(binData[i].fsr_heel_); csvFile.write(',');
+			csvFile.print(binData[i].fsr_toe_); csvFile.write(',');
 			// Thigh
 			csvFile.print(binData[i].thigh_gx); csvFile.write(',');
 			csvFile.print(binData[i].thigh_gy); csvFile.write(',');
