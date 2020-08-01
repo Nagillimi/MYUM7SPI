@@ -92,6 +92,11 @@ void setup() {
 }
 
 void loop() {
+	// Delays a bit do the following message only happens once
+	do {
+		delay(10);
+	} while (Serial.available() && Serial.read());
+  
 	// Reoccuring message
 	Serial.println(
 		"\nType '1' to begin logging in FIFO SDIO mode."
@@ -141,9 +146,9 @@ void setup_imus(byte rate_) {
 	thigh_imu.set_all_processed_rate(rate_);
 	shank_imu.set_all_processed_rate(rate_);
 	foot_imu.set_all_processed_rate(rate_);
-	thigh_imu.set_orientation_rate(rate_);
-	shank_imu.set_orientation_rate(rate_);
-	foot_imu.set_orientation_rate(rate_);
+	thigh_imu.set_orientation_rate(rate_, rate_);
+	shank_imu.set_orientation_rate(rate_, rate_);
+	foot_imu.set_orientation_rate(rate_, rate_);
 	thigh_imu.calibrate_accelerometers();
 	shank_imu.calibrate_accelerometers();
 	foot_imu.calibrate_accelerometers();
@@ -166,7 +171,7 @@ void errorHalt(const char* msg) {
 		Serial.println(sd.sdErrorData(), HEX);
 	}
 	// Halts program
-	while (true) {}
+	while (true);
 }
 // ---------------------------------------------------------------------------------------------------------
 // UM7's will just duplicate the data, since this will operate at 500 Hz
@@ -189,7 +194,7 @@ void log_data() {
 	uint32_t t0 = logTime;
 
 	// Loop runs forever unless any character is typed or max file size is hit
-	while (1) {
+	while (true) {
 		// Time for next data record.
 		logTime += LOG_INTERVAL_USEC;
 
@@ -209,7 +214,7 @@ void log_data() {
 			delta = micros() - logTime;
 		}
 
-		// Loop fills up buffer with exact amount of data required to fill 512 bytes.
+		// Loop fills up buffer with exact amount of data required
 		// Iterates in complete dataset sized chunks (DATA_BYTE_WRITE_SIZE)
 		for (uint i = 0; i < BUF_DIM; i += DATA_BYTE_WRITE_SIZE) {
 			// Capture FSR analog data			
@@ -259,18 +264,20 @@ void log_data() {
 			// Print a newline character for parsing. Try without it first, can just say it's 98 Bytes
 			// buf[i++] = ',';
 		}
-		// Flush the buffer to the SD card
-		flush();
-
-		// Character typed over Serial triggers function stop
-		if (Serial.available()) {
-			break;
+		// Flush the buffer to the SD card if SD is not busy.
+		if (!sd.card()->isBusy()) {
+			flush();
+			// Character typed over Serial triggers function stop
+			if (Serial.available()) {
+				break;
+			}
 		}
 	}
 	Serial.print(F("\nLog time: "));
 	Serial.print(0.001*(millis() - m));
 	Serial.println(F(" Seconds"));
-
+	binFile.truncate();
+	binFile.sync();
 	Serial.print(("File size: "));
 	// Warning cast used for print since fileSize is uint64_t.
 	// Could use this value for bin_to_csv()? Yep
@@ -281,15 +288,12 @@ void log_data() {
 // Flushes the filled buffer to the SD card
 // Buffer is then overwritten instead of cleared
 void flush() {
-	// Write data if SD is not busy.
-	if (!sd.card()->isBusy()) {
-		// Find the size of the file
-		unsigned long count = binFile.size();
-		// Write the buffer contents to the SD card
-		if (count != binFile.write(buf, count)) {
-			errorHalt("Failed to write to log file");
-		}
-	}
+  // Find the size of the file
+  unsigned long count = binFile.size();
+  // Write the buffer contents to the SD card
+  if (count != binFile.write(buf, count)) {
+  	errorHalt("Failed to write to log file");
+  }
 }
 // ---------------------------------------------------------------------------------------------------------
 // Similar to printRecord() function in ExFatLogger from SdFat library

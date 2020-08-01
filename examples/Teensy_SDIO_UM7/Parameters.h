@@ -49,7 +49,7 @@ uint32_t* buf32 = (uint32_t*)buf;
 uint32_t write_size;
 
 // Latency in usec
-uint32_t LOG_INTERVAL_USEC = 2000;
+const uint32_t LOG_INTERVAL_USEC = 2000;
 
 // Size of data in Bytes required to be sent per one transfer.
 const uint32_t DATA_BYTE_WRITE_SIZE = 98;
