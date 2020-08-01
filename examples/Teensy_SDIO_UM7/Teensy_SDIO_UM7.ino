@@ -204,7 +204,7 @@ void log_data() {
 			errorHalt("Rate too fast for controller, lower LOG_INTERVAL_USEC");
 		}
 
-		// Wait until time to log data.
+		// Wait until time to log data. This is more accurate than delayMicroseconds()
 		while (delta < 0) {
 			delta = micros() - logTime;
 		}
@@ -259,7 +259,7 @@ void log_data() {
 			// Print a newline character for parsing. Try without it first, can just say it's 98 Bytes
 			// buf[i++] = ',';
 		}
-		// Flush the 512 Byte buffer to the SD card
+		// Flush the buffer to the SD card
 		flush();
 
 		// Character typed over Serial triggers function stop
@@ -273,7 +273,8 @@ void log_data() {
 
 	Serial.print(("File size: "));
 	// Warning cast used for print since fileSize is uint64_t.
-	// Could use this value for bin_to_csv()?
+	// Could use this value for bin_to_csv()? Yep
+	
 	Serial.print((uint32_t)binFile.fileSize());
 }
 // ---------------------------------------------------------------------------------------------------------
