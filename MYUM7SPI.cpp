@@ -444,6 +444,16 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half)
 	b0 = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
+	// Got some weird warning about invoking undefined behaviour 
+	// if you stop reading part way through a register, so this is added
+	if (first_half) {
+		SPI.transfer(0x00);
+		delayMicroseconds(5);
+
+		SPI.transfer(0x00);
+		delayMicroseconds(5);
+	}
+
 	digitalWrite(cs, HIGH);
 }
 
