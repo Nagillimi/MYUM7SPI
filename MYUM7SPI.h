@@ -2,7 +2,7 @@
 #define MYUM7SPI_H
 
 //////////////////////////////////////
-//		CONFIGURATION REGISTERS		//
+//	CONFIGURATION REGISTERS	    //
 //////////////////////////////////////
 
 #define CREG_COM_SETTINGS 0x00 // Baud rates for reading over the UM7, default 115200 baud
@@ -53,7 +53,7 @@
 
 
 //////////////////////////////
-//		DATA REGISTERS		//
+//	DATA REGISTERS	    //
 //////////////////////////////
 
 #define DREG_HEALTH 0x55
@@ -73,24 +73,24 @@
 #define DREG_GYRO_PROC_Y 0x62 // deg/s
 #define DREG_GYRO_PROC_Z 0x63 // deg/s
 #define DREG_GYRO_PROC_TIME 0x64 // time
-#define DREG_ACCEL_PROC_X 0x65 // m/s/s
-#define DREG_ACCEL_PROC_Y 0x66 // m/s/s
-#define DREG_ACCEL_PROC_Z 0x67 // m/s/s
+#define DREG_ACCEL_PROC_X 0x65 // G
+#define DREG_ACCEL_PROC_Y 0x66 // G
+#define DREG_ACCEL_PROC_Z 0x67 // G
 #define DREG_ACCEL_PROC_TIME 0x68 // time
 #define DREG_MAG_PROC_X 0x69 // T
 #define DREG_MAG_PROC_Y 0x6A // T
 #define DREG_MAG_PROC_Z 0x6B // T
 #define DREG_MAG_PROC_TIME 0x6C // time
 
-#define DREG_QUAT_AB 0x6D // both in attitude
-#define DREG_QUAT_CD 0x6E // both in attitude
+#define DREG_QUAT_AB 0x6D // attitude, attitude
+#define DREG_QUAT_CD 0x6E // attitude, attitude
 #define DREG_QUAT_TIME 0x6F // time
-#define DREG_EULER_PHI_THETA 0x70 // both in deg
+#define DREG_EULER_PHI_THETA 0x70 // deg, deg
 #define DREG_EULER_PSI 0x71 // deg
-#define DREG_EULER_PHI_THETA_DOT 0x72 // both in deg/s
+#define DREG_EULER_PHI_THETA_DOT 0x72 // deg/s, deg/s
 #define DREG_EULER_PSI_DOT 0x73 // deg/s
 #define DREG_EULER_TIME 0x74 // time
-#define DREG_POSITION_N 0x75 // 
+#define DREG_POSITION_N 0x75
 #define DREG_POSITION_E 0x76
 #define DREG_POSITION_UP 0x77
 #define DREG_POSITION_TIME 0x78
@@ -118,7 +118,7 @@
 
 
 //////////////////////////////////
-//		COMMAND REGISTERS		//
+//	COMMAND REGISTERS	//
 //////////////////////////////////
 
 #define GET_FW_REVISION 0xAA
@@ -148,7 +148,7 @@ public:
 	MYUM7SPI(uint16_t cs_);
 
 	//////////////////////////////////
-	//		 CONFIG FUNCTIONS		//
+	//	CONFIG FUNCTIONS	//
 	//////////////////////////////////
 	
 	void set_all_raw_rate(byte rate_);
@@ -160,7 +160,7 @@ public:
 	void set_misc_ssettings(bool pps, bool zg, bool q, bool mag);
 
 	//////////////////////////////
-	//		DATA FUNCTIONS		//
+	//	DATA FUNCTIONS      //
 	//////////////////////////////
 
 	void get_all_raw_data();
@@ -171,7 +171,7 @@ public:
 	void read_binary_data(byte address, byte b0, byte b1, bool first_half);
 
 	//////////////////////////////////
-	//		 COMMAND FUNCTIONS		//
+	//	COMMAND FUNCTIONS	//
 	//////////////////////////////////
 	
 	int32_t get_firmware();
@@ -184,55 +184,54 @@ public:
 	void reset_ekf();
 	
 	//////////////////////////////////////
-	//		 ACCESSIBLE VARIABLES		//
+	//	 ACCESSIBLE VARIABLES       //
 	//////////////////////////////////////
 
-	/* EULER Variables */
+	// EULER Variables
 	int16_t roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate;
 	float euler_time;
 
-	/* QUATERNION Variables */
+	// QUATERNION Variables
 	int16_t quat_a, quat_b, quat_c, quat_d, quat_time;
 
-	/* RAW Variables */
+	// RAW Variables
 	int16_t gyro_raw_x, gyro_raw_y, gyro_raw_z;
 	int16_t accel_raw_x, accel_raw_y, accel_raw_z;
 	int16_t mag_raw_x, mag_raw_y, mag_raw_z;
 	float temp, temp_time;
-
 	float gyro_raw_time, accel_raw_time, mag_raw_time;
 
-	/* PROCESSED Variables */
+	// PROCESSED Variables
 	float gyro_x, gyro_y, gyro_z, gyro_time;
 	float accel_x, accel_y, accel_z, accel_time;
 	float mag_x, mag_y, mag_z, mag_time;
 
-	/* POSITION and VELOCITY Variables */
+	// POSITION and VELOCITY Variables
 	float north_pos, east_pos, up_pos, pos_time;
 	float north_vel, east_vel, up_vel, vel_time;
 
-	/* GPS Variables
-	   Only available if GPS is installed with coms set on TX2/RX2 */
+	// GPS Variables
+	// Only available if GPS is installed with coms set on TX2/RX2 
 	float lattitude, longitude, altitude, course, speed, gps_time;
 
-	/* SAT Variables
-	   Only available if GPS is installed with coms set on TX2/RX2
-	   SNR = Signal-to-Noise Ratio
-	   (Note index is 1 lower than actual satellite ID) */
+	// SAT Variables
+	// Only available if GPS is installed with coms set on TX2/RX2
+	// SNR = Signal-to-Noise Ratio
+	// (Note index is 1 lower than actual satellite ID)
 	float satellite_id[12], satellite_SNR[12];
 
-	/* GYRO BIAS Variables. 
-	   Not necessary to read in for ZERO_GYROS, that function already measures these */
+	// GYRO BIAS Variables. 
+	// Not necessary to read in for ZERO_GYROS, that function already measures these
 	float gyro_bias_x, gyro_bias_y, gyro_bias_z;
 
 private:
 
 	//////////////////////////////////
-	//		INTERNAL FUNCTIONS		//
+	//	INTERNAL FUNCTIONS	//
 	//////////////////////////////////
 
 	int16_t read_register(byte address, bool first_half);
-	int32_t read_register(byte address);
+	float read_register(byte address);
 
 	void write_register(byte address, uint32_t contents_);
 	void write_register(byte address);
