@@ -274,7 +274,7 @@ void log_data() {
 	Serial.print(("File size: "));
 	// Warning cast used for print since fileSize is uint64_t.
 	// Could use this value for bin_to_csv()? Yep
-	write_size = binFile.fileSize()
+	write_size = binFile.fileSize();
 	Serial.print(write_size);
 }
 // ---------------------------------------------------------------------------------------------------------
