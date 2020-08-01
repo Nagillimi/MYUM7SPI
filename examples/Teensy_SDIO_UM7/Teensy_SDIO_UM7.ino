@@ -297,7 +297,9 @@ void flush() {
 // (https://www.forward.com.au/pfod/ArduinoProgramming/DataRate/SD_logging/SDToCSV.jar)
 void bin_to_csv() {
 	// Use the hard-coded data_t type to track and parse bytes from binary file
-	data_t & binData[FIFO_DIM];
+	// This should be a huge array
+	data_t binData[FIFO_DIM];
+	// header trace
 	bool header = true;
 	byte lastPct = 0;
 
@@ -350,40 +352,40 @@ void bin_to_csv() {
 			// Print contents of binData to csv file one block at a time
 			// Data sizes should line up accordingly to the data_t variables
 			// ',' is used for csv delaminating between cells
-			csvFile.print(binData->timestamp); csvFile.write(',');
+			csvFile.print(binData[i].timestamp); csvFile.write(',');
 			// FSRs
-			csvFile.print(binData->heel_fsr_); csvFile.write(',');
-			csvFile.print(binData->toe_fsr_); csvFile.write(',');
+			csvFile.print(binData[i].heel_fsr_); csvFile.write(',');
+			csvFile.print(binData[i].toe_fsr_); csvFile.write(',');
 			// Thigh
-			csvFile.print(binData->thigh_gx); csvFile.write(',');
-			csvFile.print(binData->thigh_gy); csvFile.write(',');
-			csvFile.print(binData->thigh_gz); csvFile.write(',');
-			csvFile.print(binData->thigh_ax); csvFile.write(',');
-			csvFile.print(binData->thigh_ay); csvFile.write(',');
-			csvFile.print(binData->thigh_az); csvFile.write(',');
-			csvFile.print(binData->thigh_roll); csvFile.write(',');
-			csvFile.print(binData->thigh_pitch); csvFile.write(',');
-			csvFile.print(binData->thigh_yaw); csvFile.write(',');
+			csvFile.print(binData[i].thigh_gx); csvFile.write(',');
+			csvFile.print(binData[i].thigh_gy); csvFile.write(',');
+			csvFile.print(binData[i].thigh_gz); csvFile.write(',');
+			csvFile.print(binData[i].thigh_ax); csvFile.write(',');
+			csvFile.print(binData[i].thigh_ay); csvFile.write(',');
+			csvFile.print(binData[i].thigh_az); csvFile.write(',');
+			csvFile.print(binData[i].thigh_roll); csvFile.write(',');
+			csvFile.print(binData[i].thigh_pitch); csvFile.write(',');
+			csvFile.print(binData[i].thigh_yaw); csvFile.write(',');
 			// Shank
-			csvFile.print(binData->shank_gx); csvFile.write(',');
-			csvFile.print(binData->shank_gy); csvFile.write(',');
-			csvFile.print(binData->shank_gz); csvFile.write(',');
-			csvFile.print(binData->shank_ax); csvFile.write(',');
-			csvFile.print(binData->shank_ay); csvFile.write(',');
-			csvFile.print(binData->shank_az); csvFile.write(',');
-			csvFile.print(binData->shank_roll); csvFile.write(',');
-			csvFile.print(binData->shank_pitch); csvFile.write(',');
-			csvFile.print(binData->shank_yaw); csvFile.write(',');
+			csvFile.print(binData[i].shank_gx); csvFile.write(',');
+			csvFile.print(binData[i].shank_gy); csvFile.write(',');
+			csvFile.print(binData[i].shank_gz); csvFile.write(',');
+			csvFile.print(binData[i].shank_ax); csvFile.write(',');
+			csvFile.print(binData[i].shank_ay); csvFile.write(',');
+			csvFile.print(binData[i].shank_az); csvFile.write(',');
+			csvFile.print(binData[i].shank_roll); csvFile.write(',');
+			csvFile.print(binData[i].shank_pitch); csvFile.write(',');
+			csvFile.print(binData[i].shank_yaw); csvFile.write(',');
 			// Foot
-			csvFile.print(binData->foot_gx); csvFile.write(',');
-			csvFile.print(binData->foot_gy); csvFile.write(',');
-			csvFile.print(binData->foot_gz); csvFile.write(',');
-			csvFile.print(binData->foot_ax); csvFile.write(',');
-			csvFile.print(binData->foot_ay); csvFile.write(',');
-			csvFile.print(binData->foot_az); csvFile.write(',');
-			csvFile.print(binData->foot_roll); csvFile.write(',');
-			csvFile.print(binData->foot_pitch); csvFile.write(',');
-			csvFile.print(binData->foot_yaw);
+			csvFile.print(binData[i].foot_gx); csvFile.write(',');
+			csvFile.print(binData[i].foot_gy); csvFile.write(',');
+			csvFile.print(binData[i].foot_gz); csvFile.write(',');
+			csvFile.print(binData[i].foot_ax); csvFile.write(',');
+			csvFile.print(binData[i].foot_ay); csvFile.write(',');
+			csvFile.print(binData[i].foot_az); csvFile.write(',');
+			csvFile.print(binData[i].foot_roll); csvFile.write(',');
+			csvFile.print(binData[i].foot_pitch); csvFile.write(',');
+			csvFile.print(binData[i].foot_yaw);
 			csvFile.println();
 		}
 
