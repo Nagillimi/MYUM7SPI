@@ -132,6 +132,16 @@ void logRecord(data_t* data) {
   data->roll_2 = imu2.roll;
   data->pitch_2 = imu2.pitch;
   data->yaw_2 = imu2.yaw;
+  imu3.get_vals_data();
+  data->gx_3 = imu3.gyro_x;
+  data->gy_3 = imu3.gyro_y;
+  data->gz_3 = imu3.gyro_z;
+  data->ax_3 = imu3.accel_x;
+  data->ay_3 = imu3.accel_y;
+  data->az_3 = imu3.accel_z;
+  data->roll_3 = imu3.roll;
+  data->pitch_3 = imu3.pitch;
+  data->yaw_3 = imu3.yaw;
 }
 //------------------------------------------------------------------------------
 void printRecord(Print* pr, data_t* data) {
@@ -161,6 +171,15 @@ void printRecord(Print* pr, data_t* data) {
     pr->print(F(",ROLL2"));
     pr->print(F(",PITCH2"));
     pr->print(F(",YAW2"));
+	pr->print(F(",G3X"));
+	pr->print(F(",G3Y"));
+	pr->print(F(",G3Z"));
+	pr->print(F(",A3X"));
+	pr->print(F(",A3Y"));
+	pr->print(F(",A3Z"));
+	pr->print(F(",ROLL3"));
+	pr->print(F(",PITCH3"));
+	pr->print(F(",YAW3"));
     pr->println();
     nr = 0;
     return;
@@ -187,6 +206,15 @@ void printRecord(Print* pr, data_t* data) {
   pr->write(','); pr->print(data->roll_2);
   pr->write(','); pr->print(data->pitch_2);
   pr->write(','); pr->print(data->yaw_2);
+  pr->write(','); pr->print(data->gx_3);
+  pr->write(','); pr->print(data->gy_3);
+  pr->write(','); pr->print(data->gz_3);
+  pr->write(','); pr->print(data->ax_3);
+  pr->write(','); pr->print(data->ay_3);
+  pr->write(','); pr->print(data->az_3);
+  pr->write(','); pr->print(data->roll_3);
+  pr->write(','); pr->print(data->pitch_3);
+  pr->write(','); pr->print(data->yaw_3);
   pr->println();
 }
 //==============================================================================
@@ -665,4 +693,9 @@ void setup_imus(byte rate_) {
   imu2.set_orientation_rate(rate_, rate_);
   imu2.calibrate_accelerometers();
   imu2.zero_gyros();
+  // Init UM7 3
+  imu3.set_all_processed_rate(rate_);
+  imu3.set_orientation_rate(rate_, rate_);
+  imu3.calibrate_accelerometers();
+  imu3.zero_gyros();
 }

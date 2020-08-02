@@ -7,6 +7,7 @@
 
 MYUM7SPI imu1(6); // cs pin 1
 MYUM7SPI imu2(9); // cs pin 2
+MYUM7SPI imu3(4); // cs pin 3
 
 // FSR analog pins
 // Make sure they aren't any SPI bus pins
@@ -35,5 +36,14 @@ struct data_t {
   int16_t roll_2;
   int16_t pitch_2;
   int16_t yaw_2;
+  float gx_3;
+  float gy_3;
+  float gz_3;
+  float ax_3;
+  float ay_3;
+  float az_3;
+  int16_t roll_3;
+  int16_t pitch_3;
+  int16_t yaw_3;
 };
 #endif  // ExFatLogger_h
