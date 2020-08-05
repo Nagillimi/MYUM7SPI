@@ -17,12 +17,17 @@
       otherwise you can change SD_FAT_TYPE to match your SD partition.
    2. Working on incorporating the FIFO_SDIO types.
    3. Alter the datasets you require in ExFatLogger.h
-   4. May need to use a PC program for bin_to_csv.
+   4. Should use the built-in bin_to_csv function since it calculates and
+      displays missed packets
  */
 
 #include "SdFat.h"
 #include "FreeStack.h"
 #include "ExFatLogger.h"
+
+// You may modify the log file name.  
+// Digits before the dot are file versions, don't edit them.
+char binName[] = "ExFatLogger00.bin";
 
 //------------------------------------------------------------------------------
 // This example was designed for exFAT but will support FAT16/FAT32.
@@ -35,10 +40,17 @@
 // Try 250 with Teensy 3.6, Due, or STM32.
 // Try 2000 with AVR boards, = 500Hz
 // Try 4000 with SAMD Zero boards.
-const uint32_t LOG_INTERVAL_USEC = 2000;
+const uint16_t LOG_INTERVAL_USEC = 2000;
 
-// Initial time before logging starts, set once loggin has begun
-uint32_t t0;
+// Initial time before logging starts, set once logging has begun
+// And total log time of session, used to print to csv file once
+// converted.
+uint32_t t0, log_time;
+// Init the time delta to track missed packets
+uint32_t delta = 0;
+
+// Use to compare timestamps for missed packets
+const uint16_t MAX_INTERVAL_USEC = 3000;
 
 // Set USE_RTC nonzero for file timestamps.
 // RAM use will be marginal on Uno with RTClib.
@@ -47,7 +59,7 @@ uint32_t t0;
 #include "RTClib.h"
 #endif  // USE_RTC
 
-// LED to light if overruns occur.
+// LED to light if overruns occur, define if you have one setup
 #define ERROR_LED_PIN -1
 
 /*
@@ -109,122 +121,136 @@ MinimumSerial MinSerial;
 //==============================================================================
 // Replace logRecord(), printRecord(), and ExFatLogger.h for your sensors.
 void logRecord(data_t* data) {
-  data->t = (micros() - t0);
-  data->fsr_heel = analogRead(fsr_heel_pin);
-  data->fsr_toe = analogRead(fsr_toe_pin);
-  imu1.get_vals_data();
-  data->gx_1 = imu1.gyro_x;
-  data->gy_1 = imu1.gyro_y;
-  data->gz_1 = imu1.gyro_z;
-  data->ax_1 = imu1.accel_x;
-  data->ay_1 = imu1.accel_y;
-  data->az_1 = imu1.accel_z;
-  data->roll_1 = imu1.roll;
-  data->pitch_1 = imu1.pitch;
-  data->yaw_1 = imu1.yaw;
-  imu2.get_vals_data();
-  data->gx_2 = imu2.gyro_x;
-  data->gy_2 = imu2.gyro_y;
-  data->gz_2 = imu2.gyro_z;
-  data->ax_2 = imu2.accel_x;
-  data->ay_2 = imu2.accel_y;
-  data->az_2 = imu2.accel_z;
-  data->roll_2 = imu2.roll;
-  data->pitch_2 = imu2.pitch;
-  data->yaw_2 = imu2.yaw;
-  imu3.get_vals_data();
-  data->gx_3 = imu3.gyro_x;
-  data->gy_3 = imu3.gyro_y;
-  data->gz_3 = imu3.gyro_z;
-  data->ax_3 = imu3.accel_x;
-  data->ay_3 = imu3.accel_y;
-  data->az_3 = imu3.accel_z;
-  data->roll_3 = imu3.roll;
-  data->pitch_3 = imu3.pitch;
-  data->yaw_3 = imu3.yaw;
+	data->t = (micros() - t0);
+	data->fsr_heel = analogRead(fsr_heel_pin);
+	data->fsr_toe = analogRead(fsr_toe_pin);
+	imu1.get_vals_data();
+	data->gx_1 = imu1.gyro_x;
+	data->gy_1 = imu1.gyro_y;
+	data->gz_1 = imu1.gyro_z;
+	data->ax_1 = imu1.accel_x;
+	data->ay_1 = imu1.accel_y;
+	data->az_1 = imu1.accel_z;
+	data->roll_1 = imu1.roll;
+	data->pitch_1 = imu1.pitch;
+	data->yaw_1 = imu1.yaw;
+	imu2.get_vals_data();
+	data->gx_2 = imu2.gyro_x;
+	data->gy_2 = imu2.gyro_y;
+	data->gz_2 = imu2.gyro_z;
+	data->ax_2 = imu2.accel_x;
+	data->ay_2 = imu2.accel_y;
+	data->az_2 = imu2.accel_z;
+	data->roll_2 = imu2.roll;
+	data->pitch_2 = imu2.pitch;
+	data->yaw_2 = imu2.yaw;
+	imu3.get_vals_data();
+	data->gx_3 = imu3.gyro_x;
+	data->gy_3 = imu3.gyro_y;
+	data->gz_3 = imu3.gyro_z;
+	data->ax_3 = imu3.accel_x;
+	data->ay_3 = imu3.accel_y;
+	data->az_3 = imu3.accel_z;
+	data->roll_3 = imu3.roll;
+	data->pitch_3 = imu3.pitch;
+	data->yaw_3 = imu3.yaw;
 }
 //------------------------------------------------------------------------------
 void printRecord(Print* pr, data_t* data) {
-  static uint32_t nr = 0;
-  uint32_t t_delta = 0;
-  bool first_data = true;
+	static uint32_t nr = 0;
 
-  if (!data) {
-    pr->print(F("LOG_INTERVAL_USEC,"));
-    pr->println(LOG_INTERVAL_USEC);
-    pr->print(F("TRANSFER #"));
-    pr->print(F(",TIME"));
-    pr->print(F(",FSR_HEEL"));
-    pr->print(F(",FSR_TOE"));
-    pr->print(F(",G1X"));
-    pr->print(F(",G1Y"));
-    pr->print(F(",G1Z"));
-    pr->print(F(",A1X"));
-    pr->print(F(",A1Y"));
-    pr->print(F(",A1Z"));
-    pr->print(F(",ROLL1"));
-    pr->print(F(",PITCH1"));
-    pr->print(F(",YAW1"));
-    pr->print(F(",G2X"));
-    pr->print(F(",G2Y"));
-    pr->print(F(",G2Z"));
-    pr->print(F(",A2X"));
-    pr->print(F(",A2Y"));
-    pr->print(F(",A2Z"));
-    pr->print(F(",ROLL2"));
-    pr->print(F(",PITCH2"));
-    pr->print(F(",YAW2"));
-	pr->print(F(",G3X"));
-	pr->print(F(",G3Y"));
-	pr->print(F(",G3Z"));
-	pr->print(F(",A3X"));
-	pr->print(F(",A3Y"));
-	pr->print(F(",A3Z"));
-	pr->print(F(",ROLL3"));
-	pr->print(F(",PITCH3"));
-	pr->print(F(",YAW3"));
-    pr->println();
-    nr = 0;
-    return;
-  }
+	// Print data header when no data is sent to printRecord()
+	if (!data) {
+		// File info lines
+		pr->print(F("LOG INTERVAL,"));
+		pr->print(LOG_INTERVAL_USEC);
+		pr->print(F(",microseconds"));
+		pr->println();
+		pr->print(F("TOTAL LOG TIME,"));
+		pr->print(log_time);
+		pr->print(F(",seconds"));
+		pr->println();
 
-  if (first_data) {
-	  t_delta = data->t;
-	  first_data = false;
-  }
-  pr->print(nr++);
-  pr->write(','); pr->print(data->t);
+		// Dataset Titles
+		pr->print(F("TRANSFER #"));
+		pr->print(F(",TIME"));
+		pr->print(F(",TIME DELTA"));
+		pr->print(F(",FSR HEEL"));
+		pr->print(F(",FSR TOE"));
+		pr->print(F(",G1X"));
+		pr->print(F(",G1Y"));
+		pr->print(F(",G1Z"));
+		pr->print(F(",A1X"));
+		pr->print(F(",A1Y"));
+		pr->print(F(",A1Z"));
+		pr->print(F(",ROLL1"));
+		pr->print(F(",PITCH1"));
+		pr->print(F(",YAW1"));
+		pr->print(F(",G2X"));
+		pr->print(F(",G2Y"));
+		pr->print(F(",G2Z"));
+		pr->print(F(",A2X"));
+		pr->print(F(",A2Y"));
+		pr->print(F(",A2Z"));
+		pr->print(F(",ROLL2"));
+		pr->print(F(",PITCH2"));
+		pr->print(F(",YAW2"));
+		pr->print(F(",G3X"));
+		pr->print(F(",G3Y"));
+		pr->print(F(",G3Z"));
+		pr->print(F(",A3X"));
+		pr->print(F(",A3Y"));
+		pr->print(F(",A3Z"));
+		pr->print(F(",ROLL3"));
+		pr->print(F(",PITCH3"));
+		pr->print(F(",YAW3"));
+		pr->println();
+		nr = 0;
+		return;
+	}
 
-  pr->write(','); pr->print(data->fsr_heel);
-  pr->write(','); pr->print(data->fsr_toe);
-  pr->write(','); pr->print(data->gx_1);
-  pr->write(','); pr->print(data->gy_1);
-  pr->write(','); pr->print(data->gz_1);
-  pr->write(','); pr->print(data->ax_1);
-  pr->write(','); pr->print(data->ay_1);
-  pr->write(','); pr->print(data->az_1);
-  pr->write(','); pr->print(data->roll_1);
-  pr->write(','); pr->print(data->pitch_1);
-  pr->write(','); pr->print(data->yaw_1);
-  pr->write(','); pr->print(data->gx_2);
-  pr->write(','); pr->print(data->gy_2);
-  pr->write(','); pr->print(data->gz_2);
-  pr->write(','); pr->print(data->ax_2);
-  pr->write(','); pr->print(data->ay_2);
-  pr->write(','); pr->print(data->az_2);
-  pr->write(','); pr->print(data->roll_2);
-  pr->write(','); pr->print(data->pitch_2);
-  pr->write(','); pr->print(data->yaw_2);
-  pr->write(','); pr->print(data->gx_3);
-  pr->write(','); pr->print(data->gy_3);
-  pr->write(','); pr->print(data->gz_3);
-  pr->write(','); pr->print(data->ax_3);
-  pr->write(','); pr->print(data->ay_3);
-  pr->write(','); pr->print(data->az_3);
-  pr->write(','); pr->print(data->roll_3);
-  pr->write(','); pr->print(data->pitch_3);
-  pr->write(','); pr->print(data->yaw_3);
-  pr->println();
+	// Test if the delta is too high
+	if (data->t - delta >= MAX_INTERVAL_USEC) {
+		pr->print(F("Missed Packet(s)\n"));
+	}
+	
+	// Print data packet
+	pr->print(nr++);
+	pr->write(','); pr->print(data->t);
+	pr->write(','); pr->print(data->t - delta);
+	pr->write(','); pr->print(data->fsr_heel);
+	pr->write(','); pr->print(data->fsr_toe);
+	pr->write(','); pr->print(data->gx_1);
+	pr->write(','); pr->print(data->gy_1);
+	pr->write(','); pr->print(data->gz_1);
+	pr->write(','); pr->print(data->ax_1);
+	pr->write(','); pr->print(data->ay_1);
+	pr->write(','); pr->print(data->az_1);
+	pr->write(','); pr->print(data->roll_1);
+	pr->write(','); pr->print(data->pitch_1);
+	pr->write(','); pr->print(data->yaw_1);
+	pr->write(','); pr->print(data->gx_2);
+	pr->write(','); pr->print(data->gy_2);
+	pr->write(','); pr->print(data->gz_2);
+	pr->write(','); pr->print(data->ax_2);
+	pr->write(','); pr->print(data->ay_2);
+	pr->write(','); pr->print(data->az_2);
+	pr->write(','); pr->print(data->roll_2);
+	pr->write(','); pr->print(data->pitch_2);
+	pr->write(','); pr->print(data->yaw_2);
+	pr->write(','); pr->print(data->gx_3);
+	pr->write(','); pr->print(data->gy_3);
+	pr->write(','); pr->print(data->gz_3);
+	pr->write(','); pr->print(data->ax_3);
+	pr->write(','); pr->print(data->ay_3);
+	pr->write(','); pr->print(data->az_3);
+	pr->write(','); pr->print(data->roll_3);
+	pr->write(','); pr->print(data->pitch_3);
+	pr->write(','); pr->print(data->yaw_3);
+	pr->println();
+
+	// Reset delta to hold time for the next packet
+	delta = data->t;
 }
 //==============================================================================
 const uint64_t PREALLOCATE_SIZE  =  (uint64_t)PREALLOCATE_SIZE_MiB << 20;
@@ -249,12 +275,13 @@ typedef FsFile file_t;
 #error Invalid SD_FAT_TYPE
 #endif  // SD_FAT_TYPE
 
+// Create single sd type
 sd_t sd;
 
+// Create two filetypes
 file_t binFile;
 file_t csvFile;
-// You may modify the filename.  Digits before the dot are file versions.
-char binName[] = "ExFatLogger00.bin";
+
 //------------------------------------------------------------------------------
 #if USE_RTC
 RTC_DS1307 rtc;
@@ -484,8 +511,11 @@ void logData() {
       }
     }
   }
+  // Compute total log time in seconds
+  log_time = 0.001 * (millis() - m);
+
   Serial.print(F("\nLog time: "));
-  Serial.print(0.001*(millis() - m));
+  Serial.print(log_time);
   Serial.println(F(" Seconds"));
   binFile.truncate();
   binFile.sync();
