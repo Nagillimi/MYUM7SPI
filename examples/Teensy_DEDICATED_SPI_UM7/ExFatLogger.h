@@ -1,5 +1,16 @@
 // Avoid IDE problems by defining struct in septate .h file.
 // Pad record so size is a power of two for best write performance.
+/*
+  Size of the total logged dataset in bits:
+
+ | PACKET # | TIME | FSR_HEEL | FSR_TOE | IMU_1 | IMU_2 | IMU_3 |
+ |    32    |  32  |    16    |    16   |  240  |  240  |  240  |
+
+ = 816 bits = 102 Bytes
+
+ Note:
+ - Should pad until 128 Bytes for best logging performance.
+*/
 #ifndef ExFatLogger_h
 #define ExFatLogger_h
 

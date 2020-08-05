@@ -146,6 +146,9 @@ void logRecord(data_t* data) {
 //------------------------------------------------------------------------------
 void printRecord(Print* pr, data_t* data) {
   static uint32_t nr = 0;
+  uint32_t t_delta = 0;
+  bool first_data = true;
+
   if (!data) {
     pr->print(F("LOG_INTERVAL_USEC,"));
     pr->println(LOG_INTERVAL_USEC);
@@ -184,8 +187,14 @@ void printRecord(Print* pr, data_t* data) {
     nr = 0;
     return;
   }
+
+  if (first_data) {
+	  t_delta = data->t;
+	  first_data = false;
+  }
   pr->print(nr++);
   pr->write(','); pr->print(data->t);
+
   pr->write(','); pr->print(data->fsr_heel);
   pr->write(','); pr->print(data->fsr_toe);
   pr->write(','); pr->print(data->gx_1);
