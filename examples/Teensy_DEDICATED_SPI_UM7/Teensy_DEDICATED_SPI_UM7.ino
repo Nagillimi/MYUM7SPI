@@ -713,6 +713,10 @@ void loop() {
   }
 }
 //------------------------------------------------------------------------------
+// This is where you set the SPI1 bus. Enter your according pins for MOSI, MISO, and SCK. 
+// The CS/SS pin is already defined through the argument in the default constructor.
+// Call this function with a integer for your desired rate. Assuming all the same rate for 
+// each dataset
 void setup_imus(byte rate_) {
   // Init the analog sensors
   pinMode(fsr_heel_pin, INPUT);
