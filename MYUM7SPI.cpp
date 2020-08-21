@@ -11,15 +11,14 @@ Compilation code from several libraries. Credit to:
 
  Tested on:
  - Teensy LC
- - 
+ - Teensy 3.6
 
  Notes:
  1. Since I can't pass an SPI bus for initialization, I've set the 
-    SPI bus used for the sensor as SPI1. SPI0 (or just SPI) is being
-	used by the SD card. This may be a non-issue once I get the SDIO 
-	code working.
-	To set the specific pins for the SPI bus, call SPI1.setMOSI(#),
-	SPI1.setMISO(#), SPI1.setSCK(#) after SPI1.begin().
+    SPI bus used for the sensor as SPI. SPI1 is being used by the
+	Teensy's internal SD card. 
+	To set the specific pins for the SPI bus, I call SPI.setMOSI(#),
+	SPI.setMISO(#), SPI.setSCK(#) after SPI.begin().
  2. I've kept the binary read functions for now, may still be useful
     to read direct binary from the sensor for efficiency reasons.
 */
@@ -245,6 +244,16 @@ void MYUM7SPI::get_vals_data() {
 	yaw = read_register(DREG_EULER_PSI, 1) / 91.02222;
 }
 
+void MYUM7SPI::get_bens_data() {
+	gyro_x = read_register(DREG_GYRO_PROC_X);
+	gyro_y = read_register(DREG_GYRO_PROC_Y);
+	gyro_z = read_register(DREG_GYRO_PROC_Z);
+
+	accel_x = read_register(DREG_ACCEL_PROC_X);
+	accel_y = read_register(DREG_ACCEL_PROC_Y);
+	accel_z = read_register(DREG_ACCEL_PROC_Z);
+}
+
 //////////////////////////////////
 //		COMMAND FUNCTIONS		//
 //////////////////////////////////
@@ -303,25 +312,25 @@ int16_t MYUM7SPI::read_register(byte address, bool first_half) {
 	
 	digitalWrite(cs, LOW);
 	
-	SPI1.transfer(READ);
+	SPI.transfer(READ);
 	delayMicroseconds(5);
 	
-	SPI1.transfer(address);
+	SPI.transfer(address);
 	delayMicroseconds(5);
 	
 	if(!first_half) {
-		SPI1.transfer(0x00);
+		SPI.transfer(0x00);
 		delayMicroseconds(5);
 
-		SPI1.transfer(0x00);
+		SPI.transfer(0x00);
 		delayMicroseconds(5);
 	}
-	result = SPI1.transfer(0x00);
+	result = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
 	result = result << 8;
 
-	inByte = SPI1.transfer(0x00);
+	inByte = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
 	result = result | inByte;
@@ -336,17 +345,17 @@ float MYUM7SPI::read_register(byte address) {
 
 	digitalWrite(cs, LOW);
 
-	SPI1.transfer(READ);
+	SPI.transfer(READ);
 	delayMicroseconds(5);
 
-	SPI1.transfer(address);
+	SPI.transfer(address);
 	delayMicroseconds(5);
 
-	result.bytes[3] = SPI1.transfer(0x00);
+	result.bytes[3] = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
 	for (int i = 2; i >= 0; i--) {
-		result.bytes[i] = SPI1.transfer(0x00);
+		result.bytes[i] = SPI.transfer(0x00);
 		delayMicroseconds(5);
 	}
 
@@ -361,22 +370,22 @@ float MYUM7SPI::read_register(byte address) {
 void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3) {
 	digitalWrite(cs, LOW);
 
-	SPI1.transfer(READ);
+	SPI.transfer(READ);
 	delayMicroseconds(5);
 
-	SPI1.transfer(address);
+	SPI.transfer(address);
 	delayMicroseconds(5);
 
-	b3 = SPI1.transfer(0x00);
+	b3 = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
-	b2 = SPI1.transfer(0x00);
+	b2 = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
-	b1 = SPI1.transfer(0x00);
+	b1 = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
-	b0 = SPI1.transfer(0x00);
+	b0 = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
 	digitalWrite(cs, HIGH);
@@ -389,20 +398,20 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3
 void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half) {
 	digitalWrite(cs, LOW);
 
-	SPI1.transfer(READ);
+	SPI.transfer(READ);
 	delayMicroseconds(5);
 
-	SPI1.transfer(address);
+	SPI.transfer(address);
 	delayMicroseconds(5);
 
 	if (!first_half) {
-		SPI1.transfer(0x00);
+		SPI.transfer(0x00);
 		delayMicroseconds(5);
 
-		SPI1.transfer(0x00);
+		SPI.transfer(0x00);
 		delayMicroseconds(5);
 	}
-	b1 = SPI1.transfer(0x00);
+	b1 = SPI.transfer(0x00);
 	delayMicroseconds(5);
 
 	b0 = SPI.transfer(0x00);
@@ -411,10 +420,10 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half)
 	// Got some weird warning about invoking undefined behaviour 
 	// if you stop reading part way through a register, so this is added
 	if (first_half) {
-		SPI1.transfer(0x00);
+		SPI.transfer(0x00);
 		delayMicroseconds(5);
 
-		SPI1.transfer(0x00);
+		SPI.transfer(0x00);
 		delayMicroseconds(5);
 	}
 
@@ -429,14 +438,14 @@ void MYUM7SPI::write_register(byte address, uint32_t contents_) {
 
 	digitalWrite(cs, LOW);
 
-	SPI1.transfer(WRITE);
+	SPI.transfer(WRITE);
 	delayMicroseconds(5);
 
-	SPI1.transfer(address);
+	SPI.transfer(address);
 	delayMicroseconds(5);
 
 	for (int i = 3; i >= 0; i--) {
-		SPI1.transfer(contents.bytes[i]);
+		SPI.transfer(contents.bytes[i]);
 		delayMicroseconds(5);
 	}
 
@@ -449,14 +458,14 @@ void MYUM7SPI::write_register(byte address, uint32_t contents_) {
 void MYUM7SPI::write_register(byte address) {
 	digitalWrite(cs, LOW);
 
-	SPI1.transfer(WRITE);
+	SPI.transfer(WRITE);
 	delayMicroseconds(5);
 
-	SPI1.transfer(address);
+	SPI.transfer(address);
 	delayMicroseconds(5);
 
 	for (int i = 0; i < 4; i++) {
-		SPI1.transfer(0x00);
+		SPI.transfer(0x00);
 		delayMicroseconds(5);
 	}
 
