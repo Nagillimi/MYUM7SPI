@@ -18,6 +18,9 @@
       otherwise you can change SD_FAT_TYPE to match your SD partition.
    2. Should use the built-in bin_to_csv function since it calculates and
       displays missed packets
+   3. If you'd like to run a CRC (cyclic redundancy check) on the data while 
+      writing, change USE_SD_CRC to non-zero in SdFatConfig.h (~line 181). 
+      Doesn't hinder rate.
  */
 
 #include "SdFat.h"
