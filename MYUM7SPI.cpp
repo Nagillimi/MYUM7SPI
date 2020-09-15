@@ -25,10 +25,12 @@ Compilation code from several libraries. Credit to:
 
 #include "MYUM7SPI.h"
 
-// Default constructor. Initializes cs pin and sets it as an output.
-MYUM7SPI::MYUM7SPI(uint16_t cs_) {
+// Default constructor. Initializes cs pin and sets it as an output. 
+// Also sets the UM7 rate for r/w transfer
+MYUM7SPI::MYUM7SPI(uint16_t cs_, uint32_t rate_) {
 	cs = cs_;
 	pinMode(cs, OUTPUT);
+	SPISettings um7_Settings(rate_, MSBFIRST, SPIMODE0);
 }
 
 // Useful for combining uint32_t with their composite bytes
@@ -45,7 +47,7 @@ typedef union {
 } floatval;
 
 //////////////////////////////////
-//		CONFIG FUNCTIONS		//
+//	CONFIG FUNCTIONS	//
 //////////////////////////////////
 
 // Sets the rate for all raw datasets. rate will vary from 0-255
@@ -160,7 +162,7 @@ void MYUM7SPI::set_misc_ssettings(bool pps, bool zg, bool q, bool mag) {
 }
 
 //////////////////////////////
-//		DATA FUNCTIONS		//
+//	DATA FUNCTIONS	    //
 //////////////////////////////
 
 // Assigns all raw (gyro, accel, mag) data from the associated registers
@@ -255,7 +257,7 @@ void MYUM7SPI::get_bens_data() {
 }
 
 //////////////////////////////////
-//		COMMAND FUNCTIONS		//
+//	COMMAND FUNCTIONS	//
 //////////////////////////////////
 
 // Causes the UM7 to load default factory settings.
@@ -301,12 +303,14 @@ void MYUM7SPI::reset_ekf() {
 }
 
 //////////////////////////////////
-//		INTERNAL FUNCTIONS		//
+//	INTERNAL FUNCTIONS	//
 //////////////////////////////////
 
 // Read a register that carries 2 datasets (euler data). 
 // Uses a user defined bool to determine which dataset to return
 int16_t MYUM7SPI::read_register(byte address, bool first_half) {
+	SPI.beginTransaction(um7_Settings);
+	
 	byte inByte = 0;
 	int16_t result;
 	
@@ -337,10 +341,14 @@ int16_t MYUM7SPI::read_register(byte address, bool first_half) {
 
 	digitalWrite(cs, HIGH);
 	return(result);
+	
+	SPI.endTransaction();
 }
 
 // Read from a register. Assume register takes an entire 4 Bytes and is a float point type.
 float MYUM7SPI::read_register(byte address) {
+	SPI.beginTransaction(um7_Settings);
+	
 	floatval result;
 
 	digitalWrite(cs, LOW);
@@ -361,6 +369,8 @@ float MYUM7SPI::read_register(byte address) {
 
 	digitalWrite(cs, HIGH);
 	return(result.val);
+	
+	SPI.endTransaction();
 }
 
 // Used for the SD example in order to write binary data directly,
@@ -368,6 +378,8 @@ float MYUM7SPI::read_register(byte address) {
 // This is an overloaded function to fit the various sizes of datasets from the UM7
 // This function is for 32bit registers
 void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3) {
+	SPI.beginTransaction(um7_Settings);
+	
 	digitalWrite(cs, LOW);
 
 	SPI.transfer(READ);
@@ -389,6 +401,8 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3
 	delayMicroseconds(5);
 
 	digitalWrite(cs, HIGH);
+	
+	SPI.endTransaction();
 }
 
 // Used for the SD example in order to write binary data directly,
@@ -396,6 +410,8 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, byte b2, byte b3
 // This is an overloaded function to fit the various sizes of datasets from the UM7
 // This function is for 16bit registers
 void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half) {
+	SPI.beginTransaction(um7_Settings);
+	
 	digitalWrite(cs, LOW);
 
 	SPI.transfer(READ);
@@ -428,6 +444,8 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half)
 	}
 
 	digitalWrite(cs, HIGH);
+	
+	SPI.endTransaction();
 }
 
 // Writes to a configuration register, sends the contents of "contents_" to the proper bytes.
@@ -435,7 +453,9 @@ void MYUM7SPI::read_binary_data(byte address, byte b0, byte b1, bool first_half)
 void MYUM7SPI::write_register(byte address, uint32_t contents_) {
 	intval contents;
 	contents.val = contents_;
-
+	
+	SPI.beginTransaction(um7_Settings);
+	
 	digitalWrite(cs, LOW);
 
 	SPI.transfer(WRITE);
@@ -450,12 +470,16 @@ void MYUM7SPI::write_register(byte address, uint32_t contents_) {
 	}
 
 	digitalWrite(cs, HIGH);
+	
+	SPI.endTransaction();
 }
 
 // Writes to a command register. Since no contents are required, 
 // the SPI bus passes 0x00 over the MOSI line.
 // This is an overloaded function with dual calls for command and configuration writes()
 void MYUM7SPI::write_register(byte address) {
+	SPI.beginTransaction(um7_Settings);
+	
 	digitalWrite(cs, LOW);
 
 	SPI.transfer(WRITE);
@@ -470,4 +494,6 @@ void MYUM7SPI::write_register(byte address) {
 	}
 
 	digitalWrite(cs, HIGH);
+	
+	SPI.endTransaction();
 }
