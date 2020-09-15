@@ -8,9 +8,7 @@ Revision 2: Sep 15, 2020
 - Can send firmware
 - Can configure the SPI r/w rate 
 
-********************************************************
 		CONFIGURATION REGISTERS			
-********************************************************
 
 CREG_COM_SETTINGS
 CREG_COM_RATES1
@@ -58,9 +56,7 @@ CREG_ACCEL_BIAS_X
 CREG_ACCEL_BIAS_Y
 CREG_ACCEL_BIAS_Z
 
-********************************************************
 		    DATA REGISTERS			
-********************************************************
 
 DREG_HEALTH
 DREG_GYRO_RAW_XY
@@ -122,10 +118,7 @@ DREG_GYRO_BIAS_X
 DREG_GYRO_BIAS_Y
 DREG_GYRO_BIAS_Z
 
-
-********************************************************
 		    COMMAND REGISTERS			
-********************************************************
 
 GET_FW_REVISION
 FLASH_COMMIT
@@ -136,9 +129,7 @@ SET_MAG_REFERENCE
 CALIBRATE_ACCELEROMETERS
 RESET_EKF
 
-********************************************************
 		    ACCESIBLE VARIABLES			
-********************************************************
 
 *** RAW VARIABLES ***
 int16_t 	gyro_raw_x, gyro_raw_y, gyro_raw_z;
@@ -161,15 +152,11 @@ float 		euler_time;
 float 		north_pos, east_pos, up_pos, pos_time;
 float 		north_vel, east_vel, up_vel, vel_time;
 
-********************************************************
 		    INTERNAL VARIABLES			
-********************************************************
 
 int		cs;
 
-********************************************************
 		    ACCESIBLE FUNCTIONS			
-********************************************************
 
 // Default constructor. Initializes cs pin and sets it as an output. Also inits the SPI rate for r/w transfer
 MYUM7SPI(uint16_t cs_, uint32_t rate_)
@@ -227,9 +214,7 @@ calibrate_accelerometers()
 // Resets the EKF. Extended Kalman Filter (EKF)
 reset_kalman_filter()
 
-********************************************************
 		    INTERNAL FUNCTIONS
-********************************************************
 
 // Read a register that carries 2 datasets (euler data). Uses a user defined bool to determine which dataset to return.
 read_register(uint16_t address, bool first_half)
