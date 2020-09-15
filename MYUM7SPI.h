@@ -238,6 +238,7 @@ private:
 	void write_register(byte address);
 
 	int cs;
+	SPISettings um7_Settings;
 };
 
 #endif
