@@ -159,15 +159,19 @@ int		cs;
 		    ACCESIBLE FUNCTIONS			
 
 // Default constructor. Initializes cs pin and sets it as an output. Also inits the SPI rate for r/w transfer
+
 MYUM7SPI(uint16_t cs_, uint32_t rate_)
 
 // Sets the rate for all raw datasets to the same desired rate
+
 set_all_raw_rate(uint8_t rate)
 
 // Sets the rate for all processed datasets to the same desired rate
+
 set_all_processed_rate(uint8_t rate)
 
 // Sets the rate for all quaternion, euler, position, and velocity datasets. This is an overloaded function.
+
 set_orientation_rate(byte quat_rate, byte euler_rate, byte pos_rate, byte vel_rate)
 
 // Sets the rate for all quaternion, euler, and position datasets. This is an overloaded function.
