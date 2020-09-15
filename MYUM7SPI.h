@@ -238,7 +238,7 @@ private:
 	void write_register(byte address);
 
 	int cs;
-	SPISettings um7_Settings;
+	uint32_t rate; 
 };
 
 #endif
