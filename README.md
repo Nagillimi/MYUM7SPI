@@ -1,12 +1,12 @@
 MYUM7SPI Library for Arduino IDE
 
-Revision 1: July 29, 2020
-********************************************************
+Revision 2: Sep 15, 2020
 
 - Allows for configurable communication with x UM7 units on x cs pin (SPI bus)
 - Contains the useful configuration and command registers
 - Can read from all useful data registers
 - Can send firmware
+- Can configure the SPI r/w rate 
 
 ********************************************************
 		CONFIGURATION REGISTERS			
@@ -171,131 +171,74 @@ int		cs;
 		    ACCESIBLE FUNCTIONS			
 ********************************************************
 
-MYUM7SPI(uint16_t cs_)
-/*
-	Default constructor. Initializes cs pin and sets it as an output.
-*/
+// Default constructor. Initializes cs pin and sets it as an output. Also inits the SPI rate for r/w transfer
+MYUM7SPI(uint16_t cs_, uint32_t rate_)
 
+// Sets the rate for all raw datasets to the same desired rate
 set_all_raw_rate(uint8_t rate)
-/*
-	Sets the rate for all raw datasets to the same desired rate
-*/
 
-
+// Sets the rate for all processed datasets to the same desired rate
 set_all_processed_rate(uint8_t rate)
-/*
-	Sets the rate for all processed datasets to the same desired rate
-*/
 
-
+// Sets the rate for all quaternion, euler, position, and velocity datasets. This is an overloaded function.
 set_orientation_rate(byte quat_rate, byte euler_rate, byte pos_rate, byte vel_rate)
-/*
-	Sets the rate for all quaternion, euler, position, and velocity datasets. This is an overloaded function.
-*/
 
-
+// Sets the rate for all quaternion, euler, and position datasets. This is an overloaded function.
 set_orientation_rate(byte quat_rate, byte euler_rate, byte pos_rate)
-/*
-	Sets the rate for all quaternion, euler, and position datasets. This is an overloaded function.
-*/
 
-
+// Sets the rate for all quaternion and euler datasets. This is an overloaded function.
 set_orientation_rate(byte quat_rate, byte euler_rate)
-/*
-	Sets the rate for all quaternion and euler datasets. This is an overloaded function.
-*/
 
-
+// Sets the rate for quaternion datasets. This is an overloaded function.
 set_orientation_rate(byte quat_rate)
-/*
-	Sets the rate for quaternion datasets. This is an overloaded function.
-*/
 
-
+// Miscellaneous settings for filter and sensor control options. Send a 0 if you don't wish to configure a specific setting
+// Ex. set_misc_settings(0, 1, 1, 0)
+//
+// PPS bit = Causes the TX2/RX2 pin to be used with an external GPS
+// ZG bit = Causes UM7 to measure gyro bias at setup
+// Q bit = Sensor will run in Quternion mode instead of Euler mode. Fixes pitch error in the Gimbal lock position
+// MAG bit = Magnetometer will be used in state updates
 set_misc_settings(bool pps, bool zg, bool q, bool mag)
-/*
-	Miscellaneous settings for filter and sensor control options. Send a 0 if you don't wish to configure a specific setting
-	Ex. set_misc_settings(0, 1, 1, 0)
 
-	PPS bit = Causes the TX2/RX2 pin to be used with an external GPS
-	ZG bit = Causes UM7 to measure gyro bias at setup
-	Q bit = Sensor will run in Quternion mode instead of Euler mode. Fixes pitch error in the Gimbal lock position
-	MAG bit = Magnetometer will be used in state updates
-*/
-
-
+// Causes UM7 to transmit a packet containing the firmware revision string (a 4B char sequence)
 get_firmware()
-/*
-	Causes UM7 to transmit a packet containing the firmware revision string (a 4B char sequence)
-*/
 
-
+// Causes the UM7 to write all configuration settings to FLASH so that they will remain when the power is cycled.
 save_configs_to_flash()
-/*
-	Causes the UM7 to write all configuration settings to FLASH so that they will remain when the power is cycled.
-*/
 
-
+// Causes the UM7 to load default factory settings.
 factory_reset()
-/*
-	Causes the UM7 to load default factory settings.
-*/
 
-
+// Causes the UM7 to measure the gyro outputs and set the output trim registers to compensate for any non-zero bias.
+// The UM7 should be kept stationary while the zero operation is underway.
 zero_gyros()
-/*
-	Causes the UM7 to measure the gyro outputs and set the output trim registers to compensate for any non-zero bias. 
-	The UM7 should be kept stationary while the zero operation is underway.
-*/
 
-
+// Sets the current GPS latitude, longitude, and altitude as the home position.
+// All future positions will be referenced to the current GPS position.
 set_home_position()
-/*
-	Sets the current GPS latitude, longitude, and altitude as the home position. 
-	All future positions will be referenced to the current GPS position.
-*/
 
-
+// Sets the current yaw heading position as north.
 set_mag_reference()
-/*
-	Sets the current yaw heading position as north.
-*/
 
-
+// Reboots the UM7 and performs a crude calibration on the accelerometers. Best performed on a flat surface.
 calibrate_accelerometers()
-/*
-	Reboots the UM7 and performs a crude calibration on the accelerometers. Best performed on a flat surface.
-*/
 
-
+// Resets the EKF. Extended Kalman Filter (EKF)
 reset_kalman_filter()
-/*
-	Resets the EKF. Extended Kalman Filter (EKF)
-*/
 
 ********************************************************
 		    INTERNAL FUNCTIONS
 ********************************************************
 
+// Read a register that carries 2 datasets (euler data). Uses a user defined bool to determine which dataset to return.
 read_register(uint16_t address, bool first_half)
-/*
-	Read a register that carries 2 datasets (euler data). Uses a user defined bool to determine which dataset to return.
-*/
 
-
+// Read from a register. Assume register takes an entire 4 Bytes and is a float point type.
 read_register(uint16_t address)
-/*
-	Read from a register. Assume register takes an entire 4 Bytes and is a float point type.
-*/
 
-
+// Writes to a configuration register, sends the contents of "contents_" to the proper bytes.
 write_register(byte address, uint32_t contents_)
-/*
-	Writes to a configuration register, sends the contents of "contents_" to the proper bytes.
-*/
 
-
+// Writes to a command register. Since no contents are required, the SPI bus passes 0x00 over the MOSI line.
 write_register(byte address)
-/*
-	Writes to a command register. Since no contents are required, the SPI bus passes 0x00 over the MOSI line.
-*/
