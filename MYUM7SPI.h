@@ -145,7 +145,7 @@ class MYUM7SPI {
 
 public:
 
-	MYUM7SPI(uint16_t cs_);
+	MYUM7SPI(uint16_t cs_, uint32_t rate_);
 
 	//////////////////////////////////
 	//	CONFIG FUNCTIONS	//
