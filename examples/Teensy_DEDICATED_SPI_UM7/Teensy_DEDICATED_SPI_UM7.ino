@@ -698,8 +698,6 @@ void setup_imus(byte rate_) {
   pinMode(fsr_toe_pin, INPUT);
   // Init the SPI bus used for UM7s at default rate
   SPI.begin();
-  // Limit the clock to keep wire inductance down to limit overflow
-  SPI.setClockDivider(128);
   // Default SPI0 pins:
   SPI.setMOSI(UM7_MOSI_PIN);
   SPI.setMISO(UM7_MISO_PIN);
