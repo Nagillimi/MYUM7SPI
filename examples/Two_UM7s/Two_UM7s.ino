@@ -3,8 +3,9 @@
  */
 #include <MYUM7SPI.h>
 
-MYUM7SPI imu1(37); // chip select pin for UM7 #1
-MYUM7SPI imu2(36); // chip select pin for UM7 #2
+// Init the um7's at 10MHz
+MYUM7SPI imu1(37, 10000000); // chip select pin for UM7 #1
+MYUM7SPI imu2(36, 10000000); // chip select pin for UM7 #2
 
 void setup() {
   Serial.begin(115200);
