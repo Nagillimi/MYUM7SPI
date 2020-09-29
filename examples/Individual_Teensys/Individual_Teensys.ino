@@ -453,9 +453,17 @@ void setup() {
 
   setup_imus(250); // Init with the rate
   pinMode(start_button_pin, INPUT);
+   
+  #if LED_PIN
+  pinMode(LED_PIN, OUTPUT);
+  #endif
 }
 //------------------------------------------------------------------------------
 void loop() {
+  #if LED_PIN
+  digitalWrite(LED_PIN, LOW);
+  #endif
+   
   printUnusedStack();
   // Read any Serial data.
   serialClearInput();
@@ -472,5 +480,10 @@ void loop() {
       
   // Show complete session
   Serial.println(F("\nSession complete."));
+  
+  #if LED_PIN
+  digitalWrite(LED_PIN, HIGH);
+  #endif
+   
   while(true);
 }
