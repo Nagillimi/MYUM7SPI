@@ -30,12 +30,15 @@ const uint16_t MAX_INTERVAL_USEC = 3000;
 #define UM7_MISO_PIN 12
 #define UM7_SCK_PIN 13
 
+// Led pin for done flag
+#define LED_PIN 31;
+
 // FSR analog pins
 // Make sure they aren't any SPI bus pins
 int fsr_heel_pin = A8, fsr_toe_pin = A9;
 
 // Start Button pin
-int start_button_pin = 32;
+const int start_button_pin = 32;
 //------------------------------------------------------------------------------
 // Initialize the UM7 (cs_pin, rate)
 MYUM7SPI imu1(UM7_CS_PIN, UM7_SPI_FREQ); // cs pin 1
