@@ -238,7 +238,8 @@ void logData() {
   while(digitalRead(start_button_pin) == 0) {
     delay(10);
   }
-  delay(250);
+  // Delay after button press
+  delay(1000);
   
   // Write dummy sector to start multi-block write.
   dbgAssert(sizeof(fifoBuf) >= 512);
