@@ -60,8 +60,10 @@ void setup_imus(byte rate_) {
   // Init UM7 1
   imu1.set_all_processed_rate(rate_);
   imu1.set_orientation_rate(rate_, rate_);
-  imu1.calibrate_accelerometers();
-  imu1.zero_gyros();
+  
+  // Note: Calibration sets the biasing for the XYZ accel vectors, it will rotate the coordinate system to center about [0,0,1](G).
+  //imu1.calibrate_accelerometers();
+  //imu1.zero_gyros();
 }
 //-----------------------------------DATA PACKET-----------------------------------------
 // Collection of data custom for application
