@@ -23,15 +23,15 @@ void setup() {
   imu2.set_orientation_rate(255, 255);
   delay(100);
   
-  imu1.calibrate_accelerometers();
-  delay(100);
-  imu2.calibrate_accelerometers();
-  delay(100);
+//   imu1.calibrate_accelerometers();
+//   delay(100);
+//   imu2.calibrate_accelerometers();
+//   delay(100);
 
-  imu1.zero_gyros();
-  delay(100);
-  imu2.zero_gyros();
-  delay(100);
+//   imu1.zero_gyros();
+//   delay(100);
+//   imu2.zero_gyros();
+//   delay(100);
 }
 
 void loop() {
