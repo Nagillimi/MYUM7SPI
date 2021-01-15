@@ -23,6 +23,7 @@ void setup() {
   imu2.set_orientation_rate(255, 255);
   delay(100);
   
+  // Note: Calibration sets the biasing for the XYZ accel vectors, it will rotate the coordinate system to center about [0,0,1](G).
 //   imu1.calibrate_accelerometers();
 //   delay(100);
 //   imu2.calibrate_accelerometers();
