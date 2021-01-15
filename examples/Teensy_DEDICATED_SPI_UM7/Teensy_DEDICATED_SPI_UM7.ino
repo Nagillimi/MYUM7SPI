@@ -16,9 +16,7 @@
    Notes:
    1. You need to format your SD card as exFAT before this example works,
       otherwise you can change SD_FAT_TYPE to match your SD partition.
-   2. Should use the built-in bin_to_csv function since it calculates and
-      displays missed packets
-   3. If you'd like to run a CRC (cyclic redundancy check) on the data while 
+   2. If you'd like to run a CRC (cyclic redundancy check) on the data while 
       writing, change USE_SD_CRC to non-zero in SdFatConfig.h (~line 181). 
       Doesn't hinder rate.
  */
@@ -705,16 +703,16 @@ void setup_imus(byte rate_) {
   // Init UM7 1
   imu1.set_all_processed_rate(rate_);
   imu1.set_orientation_rate(rate_, rate_);
-  imu1.calibrate_accelerometers();
-  imu1.zero_gyros();
+  //imu1.calibrate_accelerometers();
+  //imu1.zero_gyros();
   // Init UM7 2
   imu2.set_all_processed_rate(rate_);
   imu2.set_orientation_rate(rate_, rate_);
-  imu2.calibrate_accelerometers();
-  imu2.zero_gyros();
+  //imu2.calibrate_accelerometers();
+  //imu2.zero_gyros();
   // Init UM7 3
   imu3.set_all_processed_rate(rate_);
   imu3.set_orientation_rate(rate_, rate_);
-  imu3.calibrate_accelerometers();
-  imu3.zero_gyros();
+  //imu3.calibrate_accelerometers();
+  //imu3.zero_gyros();
 }
