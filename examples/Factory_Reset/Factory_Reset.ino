@@ -1,6 +1,6 @@
 #include "MYUM7SPI.h"
 
-// Init the um7's at 10MHz
+// Init 3 UM7's at 10MHz
 MYUM7SPI imu1(6, 10000000); // cs pin 1
 MYUM7SPI imu2(9, 10000000); // cs pin 2
 MYUM7SPI imu3(4, 10000000); // cs pin 3
