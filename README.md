@@ -5,7 +5,7 @@ Revision 2: Sep 15, 2020
 - Allows for configurable communication with x UM7 units on x cs pin (SPI bus)
 - Contains the useful configuration and command registers
 - Can read from all useful data registers
-- Can send firmware
+- Working on sending firmware
 - Can configure the SPI r/w rate 
 
 		CONFIGURATION REGISTERS			
